@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   stages {
-      stage('Build my Artifact') {
+      stage('Build m Artifact') {
             steps {
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so that they can be downloaded later
