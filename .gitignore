@@ -1,5 +1,7 @@
 # Compiled class file
 *.class
+jenkins.sh
+
 
 # Log file
 *.log
