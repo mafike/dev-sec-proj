@@ -23,7 +23,7 @@ pipeline {
     } */
     stage('Docker Build and Push') {
     steps {
-        withDockerRegistry(credentialsId: 'docker-hub', url: 'hub.docker.com/u/mafike') {
+        withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
             script {
                 // Print environment variables for debugging
                 sh 'printenv'
