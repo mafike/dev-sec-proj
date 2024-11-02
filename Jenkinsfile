@@ -22,15 +22,20 @@ pipeline {
       }
     } */
     stage('Docker Build and Push') {
-      steps {
-          withDockerRegistry(credentialsId: 'docker-hub',) {
-            sh 'printenv'
-            sh "docker build -t mafike1/numeric-app:${GIT_COMMIT} ."
-            sh "docker push mafike1/numeric-app:${GIT_COMMIT}"
-
-      }
+    steps {
+        withDockerRegistry(credentialsId: 'docker-hub') {
+            script {
+                // Print environment variables for debugging
+                sh 'printenv'
+                
+                // Build the Docker image
+                sh "docker build -t mafike1/numeric-app:${GIT_COMMIT} ."
+                
+                // Push the Docker image
+                sh "docker push mafike1/numeric-app:${GIT_COMMIT}"
+            }
+        }
      }
-    }
-  } 
+   }
+  }
 }
-
