@@ -23,7 +23,7 @@ pipeline {
     } */
     stage('Docker Build and Push') {
     steps {
-        withDockerRegistry(credentialsId: 'docker-hub') {
+        withDockerRegistry(credentialsId: 'docker-hub', url: 'https://registry-1.docker.io') {
             script {
                 // Print environment variables for debugging
                 sh 'printenv'
