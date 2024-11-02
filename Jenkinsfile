@@ -21,10 +21,6 @@ pipeline {
         }
       }
     } */
-   pipeline {
-    agent any
-
-    stages {
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
@@ -46,6 +42,4 @@ pipeline {
             }
         }
     }
-  }
-  }
-}
+   }
