@@ -23,8 +23,6 @@ pipeline {
     } */
     stage('Docker Build and Push') {
     steps {
-        withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
-            script {
                 // Print environment variables for debugging
                 sh 'printenv'
                 
@@ -35,7 +33,7 @@ pipeline {
                 sh "docker push mafike1/numeric-app:${GIT_COMMIT}"
             }
         }
-     }
-   }
+     
+   
   }
 }
