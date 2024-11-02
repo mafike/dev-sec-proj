@@ -11,6 +11,8 @@ pipeline {
       stage('Unit Tests - JUnit and Jacoco') {
        steps {
         sh "mvn test"
+        sh 'whoami'
+        
        }
        post {
         always {
@@ -24,7 +26,6 @@ pipeline {
           withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
             sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin docker.io'
             sh 'printenv'
-            sh 'whoami'
             sh "docker build -t mafike1/numeric-app:${GIT_COMMIT} ."
             sh "docker push mafike1/numeric-app:${GIT_COMMIT}"
 
