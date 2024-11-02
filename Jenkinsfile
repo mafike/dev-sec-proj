@@ -21,7 +21,8 @@ pipeline {
     }
     stage('Docker Build and Push') {
       steps {
-          withDockerRegistry(credentialsId: 'docker', url: 'https://hub.docker.com/') {
+          withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+            sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin your-docker-registry'
             sh 'printenv'
             sh 'docker build -t mafike1/numeric-app:""$GIT_COMMIT"" .'
             sh 'docker push mafike1/numeric-app:""$GIT_COMMIT""'
