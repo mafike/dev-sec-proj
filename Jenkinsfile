@@ -32,7 +32,6 @@ pipeline {
         }
       }
     }
-     tages {
         stage('SonarQube - SAST') {
             steps {
                 withSonarQubeEnv('sonarqube') {
@@ -50,7 +49,6 @@ pipeline {
                 }
             }   
         }
-    }
       /*  stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
