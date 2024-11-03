@@ -1,6 +1,8 @@
 pipeline {
   agent any
-
+  environment {
+        SONAR_HOST_URL = 'http://192.168.33.10:9000' // Define the environment variable
+    }
   stages {
       stage('Build m Artifact') {
             steps {
@@ -11,7 +13,6 @@ pipeline {
       stage('Unit Tests - JUnit and Jacoco') {
        steps {
         sh "mvn test"
-        sh 'whoami'
         
        }
        post {
@@ -31,21 +32,25 @@ pipeline {
         }
       }
     }
-     stage('SonarQube - SAST') {
-      steps {
-        withSonarQubeEnv('sonarqube') {
-        sh "mvn clean verify sonar:sonar \
-            -Dsonar.projectKey=numeric_app \
-            -Dsonar.projectName='numeric_app' \
-            -Dsonar.host.url=http://192.168.33.10:9000 "
-      }
-        timeout(time: 2, unit: 'MINUTES') {
-          script {
-            waitForQualityGate abortPipeline: true
-          }
+     tages {
+        stage('SonarQube - SAST') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        sh """
+                            mvn clean verify sonar:sonar \
+                                -Dsonar.projectKey=numeric_app \
+                                -Dsonar.projectName="numeric_app" \
+                                -Dsonar.host.url=${SONAR_HOST_URL} // Use the environment variable
+                        """
+                    }
+                }
+                script {
+                    waitForQualityGate abortPipeline: true
+                }
+            }   
         }
-      }   
-     }  
+    }
       /*  stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
