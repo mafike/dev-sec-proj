@@ -33,6 +33,13 @@ pipeline {
     }
      stage('SonarQube - SAST') {
       steps {
+        sh "mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=numeric_app \
+            -Dsonar.projectName='numeric_app' \
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.token=sqp_0c3dd07efca91b14ca7cb0584bdf9d69a058cb05"
+      }
+     }  
       /*  stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
