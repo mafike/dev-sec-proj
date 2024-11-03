@@ -8,7 +8,7 @@ pipeline {
               archive 'target/*.jar' //so tfhat they can be downloaded later
             }
         }   
-     /* stage('Unit Tests - JUnit and Jacoco') {
+      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         sh "mvn test"
         
@@ -19,6 +19,7 @@ pipeline {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
     } 
+    /*
      stage('SonarQube - SAST') {
       steps {
         withSonarQubeEnv('sonarqube') {
@@ -35,12 +36,12 @@ pipeline {
       }   
      }  */
 
-     stage('Vulnerability Scan - Docker ') {
+    /* stage('Vulnerability Scan - Docker ') {
       steps {
         sh "mvn dependency-check:check"
       }
-    }
-      /*  stage('Docker Build and Push') {
+    } */
+        stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -59,14 +60,14 @@ pipeline {
                     }
                 }
             }
-        } */
+        } 
     }
     post {
     always {
-    //  junit 'target/surefire-reports/*.xml'
-     // jacoco execPattern: 'target/jacoco.exec'
-     // pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
-      dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
+      junit 'target/surefire-reports/*.xml'
+      jacoco execPattern: 'target/jacoco.exec'
+      pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+     // dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
     }
 
     // success {
