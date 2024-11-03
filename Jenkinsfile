@@ -66,10 +66,10 @@ pipeline {
                     }
                 }
             }
-        } 
-    } */
+        } */
+    } 
     post {
-    always {
+     always {
      // junit 'target/surefire-reports/*.xml'
      // jacoco execPattern: 'target/jacoco.exec'
      // pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
@@ -83,8 +83,8 @@ pipeline {
     // failure {
 
     // }
-  }
-  }
+   }
+  
 }
 
    
