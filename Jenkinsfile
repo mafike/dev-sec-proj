@@ -8,7 +8,7 @@ pipeline {
               archive 'target/*.jar' //so tfhat they can be downloaded later
             }
         }   
-   /*   stage('Unit Tests - JUnit and Jacoco') {
+      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         sh "mvn test"
         sh 'whoami'
@@ -18,10 +18,20 @@ pipeline {
         always {
           junit 'target/surefire-reports/*.xml'
           jacoco execPattern: 'target/jacoco.exec'
+          }
+        }
+      } 
+      stage('Mutation Tests - PIT') {
+      steps {
+        sh "mvn org.pitest:pitest-maven:mutationCoverage"
+      }
+      post {
+        always {
+          pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
         }
       }
-    } */
-        stage('Docker Build and Push') {
+    }
+      /*  stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -40,6 +50,6 @@ pipeline {
                     }
                 }
             }
-        }
+        } */
     }
    }
