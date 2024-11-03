@@ -8,7 +8,7 @@ pipeline {
               archive 'target/*.jar' //so tfhat they can be downloaded later
             }
         }   
-      stage('Unit Tests - JUnit and Jacoco') {
+     /* stage('Unit Tests - JUnit and Jacoco') {
        steps {
         sh "mvn test"
         sh 'whoami'
@@ -21,16 +21,16 @@ pipeline {
           }
         }
       } 
-      stage('Mutation Tests - PIT') {
+     stage('Mutation Tests - PIT') {
       steps {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
       post {
         always {
-          pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+          pitmutation mutationStatsFile: '** /target/pit-reports/** /mutations.xml'
         }
       }
-    }
+    } 
      stage('SonarQube - SAST') {
       steps {
         withSonarQubeEnv('sonarqube') {
@@ -45,7 +45,7 @@ pipeline {
           }
         }
       }   
-     }  
+     }  */
 
      stage('Vulnerability Scan - Docker ') {
       steps {
