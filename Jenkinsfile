@@ -1,8 +1,5 @@
 pipeline {
   agent any
-  environment {
-        SONAR_HOST_URL = 'http://192.168.33.10:9000' // Define the environment variable
-    }
 
   stages {
       stage('Build m Artifact') {
@@ -40,7 +37,7 @@ pipeline {
         sh "mvn clean verify sonar:sonar \
             -Dsonar.projectKey=numeric_app \
             -Dsonar.projectName='numeric_app' \
-            -Dsonar.host.url=${SONAR_HOST_URL} "
+            -Dsonar.host.url=http://192.168.33.10:9000 "
       }
         timeout(time: 2, unit: 'MINUTES') {
           script {
