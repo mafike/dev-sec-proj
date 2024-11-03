@@ -36,8 +36,8 @@ pipeline {
         sh "mvn clean verify sonar:sonar \
             -Dsonar.projectKey=numeric_app \
             -Dsonar.projectName='numeric_app' \
-            -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.token=sqp_0c3dd07efca91b14ca7cb0584bdf9d69a058cb05"
+            -Dsonar.host.url=http://192.168.33.10:9000 \
+            -Dsonar.token=sqp_6acca36392a53938ed8e56b4315695e9795c5ae1"
       }
      }  
       /*  stage('Docker Build and Push') {
