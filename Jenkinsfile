@@ -31,6 +31,8 @@ pipeline {
         }
       }
     }
+     stage('SonarQube - SAST') {
+      steps {
       /*  stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
