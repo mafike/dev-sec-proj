@@ -15,6 +15,7 @@ secrets_env = [
 ]
 
 deny[msg] {    
+    some i
     input[i].Cmd == "env"
     val := input[i].Value
     contains(lower(val[_]), secrets_env[_])
@@ -23,14 +24,16 @@ deny[msg] {
 
 # Only use trusted base images
 deny[msg] {
+    some i
     input[i].Cmd == "from"
     val := split(input[i].Value[0], "/")
     count(val) > 1
     msg = sprintf("Line %d: use a trusted base image", [i])
 }
 
-# Do not use 'latest' tag for base imagedeny[msg] {
+# Do not use 'latest' tag for base images
 deny[msg] {
+    some i
     input[i].Cmd == "from"
     val := split(input[i].Value[0], ":")
     contains(lower(val[1]), "latest")
@@ -39,6 +42,7 @@ deny[msg] {
 
 # Avoid curl bashing
 deny[msg] {
+    some i
     input[i].Cmd == "run"
     val := concat(" ", input[i].Value)
     matches := regex.find_n("(curl|wget)[^|^>]*[|>]", lower(val), -1)
@@ -48,6 +52,7 @@ deny[msg] {
 
 # Do not upgrade your system packages
 warn[msg] {
+    some i
     input[i].Cmd == "run"
     val := concat(" ", input[i].Value)
     matches := regex.match(".*?(apk|yum|dnf|apt|pip).+?(install|[dist-|check-|group]?up[grade|date]).*", lower(val))
@@ -57,6 +62,7 @@ warn[msg] {
 
 # Do not use ADD if possible
 deny[msg] {
+    some i
     input[i].Cmd == "add"
     msg = sprintf("Line %d: Use COPY instead of ADD", [i])
 }
@@ -64,9 +70,10 @@ deny[msg] {
 # Any user...
 any_user {
     input[i].Cmd == "user"
- }
+}
 
 deny[msg] {
+    some i
     not any_user
     msg = "Do not run as root, use USER instead"
 }
@@ -79,6 +86,7 @@ forbidden_users = [
 ]
 
 deny[msg] {
+    some i
     command := "user"
     users := [name | input[i].Cmd == command; name := input[i].Value]
     count(users) > 0
@@ -86,8 +94,10 @@ deny[msg] {
     contains(lower(lastuser), forbidden_users[_])
     msg = sprintf("Line %d: Last USER directive (USER %s) is forbidden", [i, lastuser])
 }
+
 # Do not sudo
 deny[msg] {
+    some i
     input[i].Cmd == "run"
     val := concat(" ", input[i].Value)
     contains(lower(val), "sudo")
@@ -97,10 +107,12 @@ deny[msg] {
 # Use multi-stage builds
 default multi_stage = false
 multi_stage = true {
+    some i
     input[i].Cmd == "copy"
     val := concat(" ", input[i].Flags)
     contains(lower(val), "--from=")
 }
+
 deny[msg] {
     multi_stage == false
     msg = sprintf("You COPY, but do not appear to use multi-stage builds...", [])
