@@ -33,7 +33,7 @@ pipeline {
           }
         }
       }   
-     }  */
+     }  
 
      stage('Vulnerability Scan - Docker ') {
       steps {
@@ -49,8 +49,8 @@ pipeline {
           }
         )
       }
-    }
-       /* stage('Docker Build and Push') {
+    } */
+        stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -69,15 +69,23 @@ pipeline {
                     }
                 }
             }
-        } */
+        } 
     } 
-    post {
-     always {
+    stage('Kubernetes Deployment - DEV') {
+      steps {
+        withKubeConfig([credentialsId: 'kubeconfig']) {
+          sh "sed -i 's#replace#mafike1/numeric-app:${GIT_COMMIT}#g' k8s_deployment_service.yaml"
+          sh "kubectl apply -f k8s_deployment_service.yaml"
+        }
+      }
+    }
+   // post {
+   //  always {
      // junit 'target/surefire-reports/*.xml'
      // jacoco execPattern: 'target/jacoco.exec'
      // pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
-      dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
-    }
+     // dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
+  //  }
 
     // success {
 
@@ -85,7 +93,7 @@ pipeline {
 
     // failure {
 
-    // }
+    // } 
    }
   
 }
