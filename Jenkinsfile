@@ -1,5 +1,9 @@
 pipeline {
   agent any
+  
+environment {
+    KUBECONFIG = '/home/vagrant/.kube/config'
+}
 
   stages {
       stage('Build m Artifact') {
