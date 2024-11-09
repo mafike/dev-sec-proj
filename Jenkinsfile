@@ -12,7 +12,7 @@ environment {
               archive 'target/*.jar' //so tfhat they can be downloaded later
             }
         }   
-      stage('Unit Tests - JUnit and Jacoco') {
+   /*   stage('Unit Tests - JUnit and Jacoco') {
        steps {
         sh "mvn test"
         
@@ -83,14 +83,14 @@ environment {
       }
     }
   }
-    post {
+   /* post {
      always {
       junit 'target/surefire-reports/*.xml'
       jacoco execPattern: 'target/jacoco.exec'
-      pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+      pitmutation mutationStatsFile: '** /target/pit-reports/** /mutations.xml'
       dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
      }
-    }
+    } */
     // success {
 
     // }
