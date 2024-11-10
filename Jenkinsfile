@@ -5,7 +5,7 @@ environment {
     deploymentName = "devsecops"
     containerName = "devsecops-container"
     serviceName = "devsecops-svc"
-    imageName = "mafike/numeric-app:${GIT_COMMIT}"
+    imageName = "mafike1/numeric-app:${GIT_COMMIT}"
     applicationURL = "http://192.168.33.11/"
     applicationURI = "/increment/99"
   
