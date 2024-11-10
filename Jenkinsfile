@@ -80,7 +80,7 @@ environment {
                 }
             }
         }  
-        stage('Vulnerability Scan - Kubernetes') {
+    /* stage('Vulnerability Scan - Kubernetes') {
       steps {
         parallel(
           "OPA Scan": {
@@ -100,7 +100,7 @@ environment {
         }
       }
     }
-  } 
+  } */
       stage('K8S Deployment - DEV') {
       steps {
         parallel(
@@ -116,7 +116,7 @@ environment {
           }
         )
       }
-    } */
+    } 
 
   }
    /* post {
