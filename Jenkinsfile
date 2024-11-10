@@ -2,7 +2,13 @@ pipeline {
   agent any
   
 environment {
-    KUBECONFIG = '/home/vagrant/.kube/config'
+    deploymentName = "devsecops"
+    containerName = "devsecops-container"
+    serviceName = "devsecops-svc"
+    imageName = "mafike/numeric-app:${GIT_COMMIT}"
+    applicationURL = "http://192.168.33.11/"
+    applicationURI = "/increment/99"
+  
 }
 
   stages {
@@ -74,7 +80,7 @@ environment {
                 }
             }
         }  
-    stage('Kubernetes Deployment - DEV') {
+   /* stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
           sh "sed -i 's#replace#mafike1/numeric-app:${GIT_COMMIT}#g' k8s_deployment_service.yaml"
@@ -82,6 +88,24 @@ environment {
         }
       }
     }
+  } */
+      stage('K8S Deployment - DEV') {
+      steps {
+        parallel(
+          "Deployment": {
+            withKubeConfig([credentialsId: 'kubeconfig']) {
+              sh "bash k8s-deployment.sh"
+            }
+          },
+          "Rollout Status": {
+            withKubeConfig([credentialsId: 'kubeconfig']) {
+              sh "bash k8s-deployment-rollout-status.sh"
+            }
+          }
+        )
+      }
+    }
+
   }
    /* post {
      always {
