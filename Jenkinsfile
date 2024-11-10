@@ -80,7 +80,7 @@ environment {
                 }
             }
         }  
-    /* stage('Vulnerability Scan - Kubernetes') {
+     stage('Vulnerability Scan - Kubernetes') {
       steps {
         parallel(
           "OPA Scan": {
@@ -88,10 +88,14 @@ environment {
           },
           "Kubesec Scan": {
             sh "bash kubesec-scan.sh"
+          },
+          "Trivy Scan": {
+            sh "bash trivy-k8s-scan.sh"
           }
         )
       }
     }
+  }
    /* stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
@@ -100,7 +104,7 @@ environment {
         }
       }
     }
-  } */
+  } 
       stage('K8S Deployment - DEV') {
       steps {
         parallel(
@@ -118,7 +122,7 @@ environment {
       }
     } 
 
-  }
+  } */
    /* post {
      always {
       junit 'target/surefire-reports/*.xml'
