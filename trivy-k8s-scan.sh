@@ -20,4 +20,4 @@ docker run --rm -v $WORKSPACE:/root/.cache/ aquasec/trivy:0.17.2 -q image --exit
         echo "Image scanning passed. No vulnerabilities found"
     fi;
 
-############### trivy-k8s-scan.sh ###############
+############### trivy-k8s-scan.sh ############### 
