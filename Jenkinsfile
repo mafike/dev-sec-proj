@@ -6,7 +6,7 @@ environment {
     containerName = "devsecops-container"
     serviceName = "devsecops-svc"
     imageName = "mafike1/numeric-app:${GIT_COMMIT}"
-    applicationURL = "http://192.168.33.11/"
+    applicationURL = "http://192.168.33.11"
     applicationURI = "/increment/99"
   
 }
