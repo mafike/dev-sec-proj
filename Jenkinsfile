@@ -139,7 +139,6 @@ environment {
 
   }
 
-  }
    
    /* post {
      always {
