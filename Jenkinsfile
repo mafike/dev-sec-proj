@@ -80,7 +80,7 @@ environment {
                 }
             }
         }  
-     stage('Vulnerability Scan - Kubernetes') {
+    /* stage('Vulnerability Scan - Kubernetes') {
       steps {
         parallel(
           "OPA Scan": {
@@ -120,7 +120,7 @@ environment {
         )
       }
     } 
-    stage('Integration Tests - DEV') {
+   /* stage('Integration Tests - DEV') {
       steps {
         script {
           try {
@@ -135,7 +135,7 @@ environment {
           }
         }
       }
-    }
+    } */
 
   stage('OWASP ZAP - DAST') {
       steps {

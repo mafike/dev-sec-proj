@@ -5,4 +5,8 @@
 # You can add your own messages to each rule by appending them after a tab on each line.
 100001  IGNORE  http://192.168.33.11:32662/
 100000  IGNORE  http://192.168.33.11:32662/
+<<<<<<< HEAD
 40042   IGNORE  http://192.168.33.11:32662/
+=======
+40042  IGNORE  http://192.168.33.11:32662/
+>>>>>>> 82d88d300c1a9e697855ac8f4501963342864ee0
