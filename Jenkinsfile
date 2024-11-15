@@ -181,9 +181,9 @@ environment {
                         // Run the Python script to generate the combined HTML report
                         sh """
                         if [ -f combined-bench-report.json ]; then
-                            python3 generate_combined_kube_bench_report.py
+                            python3 generate_kube_bench_report.py
                         else
-                            echo "combined-bench-report.json not found. Skipping HTML report generation."
+                            echo "kube-bench-report.json not found. Skipping HTML report generation."
                         fi
                         """
                     }
