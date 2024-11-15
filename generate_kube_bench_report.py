@@ -58,11 +58,12 @@ for control in data.get("Controls", []):
         for result in test.get("results", []):
             status = result["status"]
             result_class = "fail" if status == "FAIL" else "warn" if status == "WARN" else "pass"
+            remediation = result.get('remediation', 'N/A').replace('\n', '<br>').replace('\\', '\\\\')
             html += f"""
             <tr class="{result_class}">
                 <td>{result.get('test_number', 'N/A')}</td>
                 <td>{result.get('test_desc', 'N/A')}</td>
-                <td>{result.get('remediation', 'N/A').replace('\n', '<br>')}</td>
+                <td>{remediation}</td>
                 <td>{status}</td>
             </tr>
             """
@@ -80,4 +81,3 @@ with open('kube-bench-report.html', 'w') as f:
     f.write(html)
 
 print("HTML report generated: kube-bench-report.html")
-
