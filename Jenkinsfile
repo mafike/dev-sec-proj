@@ -166,7 +166,17 @@ environment {
                 }
             }
         }
-  }
+        stage('Generate HTML Report') {
+            steps {
+                script {
+                    // Generate the HTML report
+                    sh """
+                    python3 generate_kube_bench_report.py
+                    """
+                }
+            }
+        }
+    }
     post {
      always {
      // junit 'target/surefire-reports/*.xml'
@@ -174,6 +184,7 @@ environment {
      // pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
      // dependencyCheckPublisher pattern: 'target/dependency-check-report.xml',
      // publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
+      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
       sendNotification currentBuild.result
     }
      }
