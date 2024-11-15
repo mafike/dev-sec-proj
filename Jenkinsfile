@@ -3,6 +3,7 @@ pipeline {
   agent any
   
 environment {
+    KUBE_BENCH_SCRIPT = 'cis-master.sh'
     deploymentName = "devsecops"
     containerName = "devsecops-container"
     serviceName = "devsecops-svc"
@@ -13,7 +14,7 @@ environment {
 }
 
   stages {
-      stage('Build my Artifact') {
+      /* stage('Build my Artifact') {
             steps {
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
@@ -60,7 +61,7 @@ environment {
           }
         )
       }
-    } */
+    } 
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
@@ -105,7 +106,7 @@ environment {
       }
     }
   } */
-      stage('K8S Deployment - DEV') {
+     /* stage('K8S Deployment - DEV') {
       steps {
         parallel(
           "Deployment": {
@@ -136,7 +137,7 @@ environment {
           }
         }
       }
-    } */
+    } 
 
   stage('OWASP ZAP - DAST') {
       steps {
@@ -145,17 +146,37 @@ environment {
         }
       }
     }
+  stage('Prompte to PROD?') {
+  steps {
+    timeout(time: 2, unit: 'DAYS') {
+      input 'Do you want to Approve the Deployment to Production Environment/Namespace?'
+    }
+   }
+  } */
 
+  stages {
+        stage('Run CIS Benchmark') {
+            steps {
+                script {
+                    // Inject kubeconfig as an environment variable and run the script
+                    withCredentials([string(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                        sh """
+                        chmod +x ${KUBE_BENCH_SCRIPT}
+                        KUBECONFIG_CONTENT="\${KUBECONFIG}" ./${KUBE_BENCH_SCRIPT}
+                        """
+                    }
+                }
+            }
+        }
+    } 
   }
-
-   
     post {
      always {
      // junit 'target/surefire-reports/*.xml'
      // jacoco execPattern: 'target/jacoco.exec'
      // pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
      // dependencyCheckPublisher pattern: 'target/dependency-check-report.xml',
-      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
+     // publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
       sendNotification currentBuild.result
     }
      }
