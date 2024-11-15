@@ -1,8 +1,19 @@
 import json
+import os
 
-# Load the JSON report
-with open('kube-bench-report.json', 'r') as f:
-    data = json.load(f)
+# Check if the JSON file exists and is not empty
+json_file = 'kube-bench-report.json'
+if not os.path.exists(json_file) or os.path.getsize(json_file) == 0:
+    print("Error: kube-bench-report.json is missing or empty.")
+    exit(1)
+
+try:
+    # Load the JSON report
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+except json.JSONDecodeError as e:
+    print(f"Error: Failed to decode JSON file. {e}")
+    exit(1)
 
 # HTML report structure
 html = """
