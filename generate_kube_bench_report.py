@@ -2,7 +2,7 @@ import json
 import os
 
 # Check if the JSON file exists and is not empty
-json_file = 'kube-bench-report.json'
+json_file = './kube-bench-report.json'
 if not os.path.exists(json_file) or os.path.getsize(json_file) == 0:
     print("Error: kube-bench-report.json is missing or empty.")
     exit(1)
