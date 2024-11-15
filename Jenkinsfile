@@ -155,30 +155,44 @@ environment {
   } */
         stage('Run CIS Benchmark') {
             steps {
-              parallel(
-                "Run CIS Benchmark": {
-                script {
-                    // Use the kubeconfig file credential
-                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+        script {
+            // Use the kubeconfig file credential once for all parallel tasks
+            withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                parallel(
+                    "Run Master Benchmark": {
                         sh """
-                        chmod +x ${KUBE_BENCH_SCRIPT}
-                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./${KUBE_BENCH_SCRIPT}
+                        chmod +x cis-master.sh
+                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-master.sh
+                        """
+                    },
+                    "Run ETCD Benchmark": {
+                        sh """
+                        chmod +x cis-etcd.sh
+                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-etcd.sh
+                        """
+                    },
+                    "Run Kubelet Benchmark": {
+                        sh """
+                        chmod +x cis-kubelet.sh
+                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-kubelet.sh
+                        """
+                    },
+                    "Generate HTML Report": {
+                        // Run the Python script to generate the combined HTML report
+                        sh """
+                        if [ -f combined-bench-report.json ]; then
+                            python3 generate_combined_kube_bench_report.py
+                        else
+                            echo "combined-bench-report.json not found. Skipping HTML report generation."
+                        fi
                         """
                     }
-                }
-            },
-                "Generate HTML Report":{
-                  script {
-                    // Generate the HTML report
-                    sh """
-                    python3 generate_kube_bench_report.py
-                    """
-                }
-             }
-           )        
-        }  
+                )
+            }
+        }
     }
-  }
+   }
+}
     post {
      always {
      // junit 'target/surefire-reports/*.xml'
@@ -186,7 +200,7 @@ environment {
      // pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
      // dependencyCheckPublisher pattern: 'target/dependency-check-report.xml',
      // publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
-      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
+      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'combined-kube-bench-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
       sendNotification currentBuild.result
     }
      }
