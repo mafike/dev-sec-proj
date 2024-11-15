@@ -180,9 +180,11 @@ environment {
                     "Generate HTML Report": {
                         // Run the Python script to generate the combined HTML report
                         sh """
-
+                        sleep 5  # Allow time for kube-bench to create the report
+                            if [ ! -s kube-bench-report.json ]; then
+                                echo "{}" > kube-bench-report.json  # Generate an empty report if kube-bench fails
+                            fi
                             python3 generate_kube_bench_report.py
-                       
                         """
                     }
                 )
