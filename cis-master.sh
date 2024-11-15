@@ -9,8 +9,8 @@ fi
 
 export KUBECONFIG=$KUBECONFIG_PATH
 
-# Run kube-bench in a Docker container and capture the total number of failures
-total_fail=$(docker run --rm \
+# Run kube-bench in a Docker container and save the detailed output
+docker run --rm \
     --pid=host \
     -v /etc:/etc:ro \
     -v /var:/var:ro \
@@ -21,11 +21,15 @@ total_fail=$(docker run --rm \
     run --targets master \
         --version 1.19 \
         --check 1.2.7,1.2.8,1.2.9 \
-        --json | jq .Totals.total_fail)
+        --json > kube-bench-report.json
+
+# Extract the number of failures
+total_fail=$(jq .Totals.total_fail < kube-bench-report.json)
 
 # Check if there are any failures
 if [[ "$total_fail" -ne 0 ]]; then
     echo "CIS Benchmark Failed MASTER while testing for 1.2.7, 1.2.8, 1.2.9"
+    echo "Check the detailed report in kube-bench-report.json for more information."
     exit 1
 else
     echo "CIS Benchmark Passed for MASTER - 1.2.7, 1.2.8, 1.2.9"
