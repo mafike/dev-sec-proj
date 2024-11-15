@@ -155,18 +155,18 @@ environment {
   } */
         stage('Run CIS Benchmark') {
             steps {
-                    // Inject kubeconfig as an environment variable and run the script
-                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                      script {
+                script {
+                    // Use the kubeconfig file credential
+                    withCredentials([file(credentialsId: 'kubeconfig-credential-id', variable: 'KUBECONFIG_FILE')]) {
                         sh """
                         chmod +x ${KUBE_BENCH_SCRIPT}
-                        KUBECONFIG_CONTENT="\${KUBECONFIG}" ./${KUBE_BENCH_SCRIPT}
+                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./${KUBE_BENCH_SCRIPT}
                         """
                     }
                 }
             }
         }
-    } 
+  }
     post {
      always {
      // junit 'target/surefire-reports/*.xml'

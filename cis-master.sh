@@ -1,5 +1,5 @@
 #!/bin/bash
-# cis-master-docker.sh
+# cis-master.sh
 
 # Ensure kubeconfig path is passed as an environment variable
 if [[ -z "$KUBECONFIG_PATH" ]]; then
