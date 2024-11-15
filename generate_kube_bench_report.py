@@ -2,7 +2,7 @@ import json
 
 # Load the combined JSON report
 with open('combined-bench-report.json', 'r') as f:
-    data = [json.loads(line) for line in f]
+    data = json.load(f)
 
 # Start HTML report structure
 html = """
@@ -63,5 +63,7 @@ html += """
 # Save the HTML report
 with open('combined-kube-bench-report.html', 'w') as f:
     f.write(html)
+
 print("HTML report generated: combined-kube-bench-report.html")
+
 

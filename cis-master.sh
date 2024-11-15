@@ -25,8 +25,11 @@ docker run --rm \
 
 # Extract the number of failures
 total_fail=$(jq .Totals.total_fail < master-bench-report.json)
-# Append results to the combined report
-jq '. | .target="master"' master-bench-report.json >> combined-bench-report.json
+ # Append results to combined report with valid JSON structure
+if [ ! -f combined-bench-report.json ]; then
+    echo "[]" > combined-bench-report.json
+fi
+jq '. + [{"target": "master", "Tests": .Tests}]' master-bench-report.json combined-bench-report.json > temp.json && mv temp.json combined-bench-report.json
 
 # Check if there are any failures( it should be 0, but rn we just want the test to pass)
 if [[ "$total_fail" -ge 3 ]]; then
