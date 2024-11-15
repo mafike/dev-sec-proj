@@ -155,6 +155,8 @@ environment {
   } */
         stage('Run CIS Benchmark') {
             steps {
+              parallel(
+                "Run CIS Benchmark": {
                 script {
                     // Use the kubeconfig file credential
                     withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
@@ -164,19 +166,19 @@ environment {
                         """
                     }
                 }
-            }
-        }
-        stage('Generate HTML Report') {
-            steps {
-                script {
+            },
+                "Generate HTML Report":{
+                  script {
                     // Generate the HTML report
                     sh """
                     python3 generate_kube_bench_report.py
                     """
                 }
-            }
-        }
+             }
+           )        
+        }  
     }
+  }
     post {
      always {
      // junit 'target/surefire-reports/*.xml'
