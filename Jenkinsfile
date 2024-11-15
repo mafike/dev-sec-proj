@@ -157,7 +157,7 @@ environment {
             steps {
                 script {
                     // Use the kubeconfig file credential
-                    withCredentials([file(credentialsId: 'kubeconfig-credential-id', variable: 'KUBECONFIG_FILE')]) {
+                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                         sh """
                         chmod +x ${KUBE_BENCH_SCRIPT}
                         KUBECONFIG_PATH=\$KUBECONFIG_FILE ./${KUBE_BENCH_SCRIPT}
