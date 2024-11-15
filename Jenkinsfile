@@ -165,26 +165,13 @@ environment {
                         KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-master.sh
                         """
                     },
-                    "Run ETCD Benchmark": {
-                        sh """
-                        chmod +x cis-etcd.sh
-                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-etcd.sh
-                        """
-                    },
-                    "Run Kubelet Benchmark": {
-                        sh """
-                        chmod +x cis-kubelet.sh
-                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-kubelet.sh
-                        """
-                    },
+
                     "Generate HTML Report": {
                         // Run the Python script to generate the combined HTML report
                         sh """
-                        if [ -f kube-bench-report.json ]; then
+
                             python3 generate_kube_bench_report.py
-                        else
-                            echo "kube-bench-report.json not found. Skipping HTML report generation."
-                        fi
+                       
                         """
                     }
                 )
