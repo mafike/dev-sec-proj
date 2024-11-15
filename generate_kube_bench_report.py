@@ -1,8 +1,12 @@
 import json
 
-# Load the combined JSON report
-with open('combined-bench-report.json', 'r') as f:
-    data = json.load(f)  # Load as a list of reports
+try:
+    # Load the combined JSON report
+    with open('combined-bench-report.json', 'r') as f:
+        data = json.load(f)  # Load as a list of reports
+except json.JSONDecodeError as e:
+    print(f"Error loading JSON: {e}")
+    exit(1)
 
 # Start HTML report structure
 html = """
@@ -64,6 +68,3 @@ html += """
 with open('combined-kube-bench-report.html', 'w') as f:
     f.write(html)
 print("HTML report generated: combined-kube-bench-report.html")
-
-
-
