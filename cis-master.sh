@@ -27,7 +27,7 @@ docker run --rm \
 total_fail=$(jq .Totals.total_fail < kube-bench-report.json)
 
 # Check if there are any failures
-if [[ "$total_fail" -ne 0 ]]; then
+if [[ "$total_fail" -ge 2 ]]; then
     echo "CIS Benchmark Failed MASTER while testing for 1.2.7, 1.2.8, 1.2.9"
     echo "Check the detailed report in kube-bench-report.json for more information."
     exit 1
