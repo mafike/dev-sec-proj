@@ -64,3 +64,4 @@ html += """
 with open('combined-kube-bench-report.html', 'w') as f:
     f.write(html)
 print("HTML report generated: combined-kube-bench-report.html")
+
