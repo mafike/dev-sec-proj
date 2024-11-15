@@ -74,3 +74,4 @@ html += """
 # Save the HTML report
 with open('kube-bench-report.html', 'w') as f:
     f.write(html)
+
