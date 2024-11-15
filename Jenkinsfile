@@ -153,7 +153,7 @@ environment {
     }
    }
   } */
-     /*   stage('Run CIS Benchmark') {
+       stage('Run CIS Benchmark') {
             steps {
         script {
             // Use the kubeconfig file credential once for all parallel tasks
@@ -191,7 +191,7 @@ environment {
             }
         }
     }
-   } */
+   } 
 }
     post {
      always {
