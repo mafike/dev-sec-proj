@@ -1,19 +1,8 @@
 import json
-import os
 
-# Check if the JSON file exists and is not empty
-json_file = './kube-bench-report.json'
-if not os.path.exists(json_file) or os.path.getsize(json_file) == 0:
-    print("Error: kube-bench-report.json is missing or empty.")
-    exit(1)
-
-try:
-    # Load the JSON report
-    with open(json_file, 'r') as f:
-        data = json.load(f)
-except json.JSONDecodeError as e:
-    print(f"Error: Failed to decode JSON file. {e}")
-    exit(1)
+# Load the JSON report
+with open('kube-bench-report.json', 'r') as f:
+    data = json.load(f)
 
 # HTML report structure
 html = """
@@ -37,9 +26,6 @@ html = """
         .fail {
             background-color: #ffcccc;
         }
-        .warn {
-            background-color: #ffffcc;
-        }
         .pass {
             background-color: #ccffcc;
         }
@@ -59,19 +45,18 @@ html = """
         <tbody>
 """
 
-# Iterate over controls and generate rows for the HTML table
-for control in data.get("Controls", []):
-    for test in control.get("tests", []):
-        for result in test.get("results", []):
-            result_class = "fail" if result["status"] == "FAIL" else "warn" if result["status"] == "WARN" else "pass"
-            html += f"""
-            <tr class="{result_class}">
-                <td>{result['test_number']}</td>
-                <td>{result['test_desc']}</td>
-                <td>{result.get('remediation', 'N/A')}</td>
-                <td>{result['status']}</td>
-            </tr>
-            """
+# Populate the HTML table
+for test in data.get("Tests", []):
+    for item in test.get("results", []):
+        result_class = "fail" if item["status"] == "FAIL" else "pass"
+        html += f"""
+        <tr class="{result_class}">
+            <td>{item['test_number']}</td>
+            <td>{item['test_desc']}</td>
+            <td>{item.get('remediation', 'N/A')}</td>
+            <td>{item['status']}</td>
+        </tr>
+        """
 
 # Close the HTML structure
 html += """
