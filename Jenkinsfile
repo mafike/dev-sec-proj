@@ -3,7 +3,7 @@ pipeline {
   agent any
   
 environment {
-    KUBE_BENCH_SCRIPT = 'cis-master.sh'
+    KUBE_BENCH_SCRIPT = "cis-master.sh"
     deploymentName = "devsecops"
     containerName = "devsecops-container"
     serviceName = "devsecops-svc"
