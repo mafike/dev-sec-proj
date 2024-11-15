@@ -9,7 +9,8 @@ fi
 
 export KUBECONFIG=$KUBECONFIG_PATH
 
-# Run kube-bench in a Docker container and save the detailed output
+# Run kube-bench and log output
+echo "Running kube-bench..."
 docker run --rm \
     --pid=host \
     -v /etc:/etc:ro \
@@ -21,17 +22,15 @@ docker run --rm \
     run --targets master \
         --version 1.19 \
         --check 1.2.7,1.2.8,1.2.9 \
-        --json > master-bench-report.json
+        --json > kube-bench-report.json
 
-# Extract the number of failures
-total_fail=$(jq .Totals.total_fail < master-bench-report.json)
- # Initialize combined report as an array if it doesn't exist
-# Append the raw JSON to the combined report, ensuring proper formatting
-if [[ -f combined-bench-report.json ]]; then
-    echo "," >> combined-bench-report.json
+if [[ ! -f kube-bench-report.json ]]; then
+    echo "Failed to generate kube-bench report. Exiting."
+    exit 1
 fi
-cat master-bench-report.json >> combined-bench-report.json
-# Check if there are any failures( it should be 0, but rn we just want the test to pass)
+
+echo "kube-bench report generated: kube-bench-report.json"
+# Check if there are any failures
 if [[ "$total_fail" -ge 3 ]]; then
     echo "CIS Benchmark Failed MASTER while testing for 1.2.7, 1.2.8, 1.2.9"
     echo "Check the detailed report in kube-bench-report.json for more information."

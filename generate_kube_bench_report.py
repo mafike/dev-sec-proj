@@ -1,19 +1,15 @@
 import json
 
-try:
-    # Load the combined JSON report
-    with open('combined-bench-report.json', 'r') as f:
-        data = json.load(f)  # Load as a list of reports
-except json.JSONDecodeError as e:
-    print(f"Error loading JSON: {e}")
-    exit(1)
+# Load the JSON report
+with open('kube-bench-report.json', 'r') as f:
+    data = json.load(f)
 
-# Start HTML report structure
+# HTML report structure
 html = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Combined Kube-Bench Report</title>
+    <title>Kube-Bench Report</title>
     <style>
         table {
             border-collapse: collapse;
@@ -36,35 +32,40 @@ html = """
     </style>
 </head>
 <body>
-    <h1>Combined Kube-Bench Report</h1>
+    <h1>Kube-Bench Report</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Remediation</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody>
 """
 
-# Add a table for each target
-for report in data:
-    target = report.get("target", "unknown")
-    html += f"<h2>Target: {target}</h2><table><tr><th>ID</th><th>Description</th><th>Remediation</th><th>Result</th></tr>"
-    
-    for test in report.get("Tests", []):
-        for item in test.get("results", []):
-            result_class = "fail" if item["status"] == "FAIL" else "pass"
-            html += f"""
-            <tr class="{result_class}">
-                <td>{item['test_number']}</td>
-                <td>{item['test_desc']}</td>
-                <td>{item.get('remediation', 'N/A')}</td>
-                <td>{item['status']}</td>
-            </tr>
-            """
-    
-    html += "</table>"
+# Populate the HTML table
+for test in data.get("Tests", []):
+    for item in test.get("results", []):
+        result_class = "fail" if item["status"] == "FAIL" else "pass"
+        html += f"""
+        <tr class="{result_class}">
+            <td>{item['test_number']}</td>
+            <td>{item['test_desc']}</td>
+            <td>{item.get('remediation', 'N/A')}</td>
+            <td>{item['status']}</td>
+        </tr>
+        """
 
-# Close HTML structure
+# Close the HTML structure
 html += """
+        </tbody>
+    </table>
 </body>
 </html>
 """
 
 # Save the HTML report
-with open('combined-kube-bench-report.html', 'w') as f:
+with open('kube-bench-report.html', 'w') as f:
     f.write(html)
-print("HTML report generated: combined-kube-bench-report.html")

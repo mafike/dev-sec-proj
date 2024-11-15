@@ -176,13 +176,7 @@ environment {
                         chmod +x cis-kubelet.sh
                         KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-kubelet.sh
                         """
-                    },
-                    "Finalized combine script": {
-                      sh """
-                      chmod +x finalize-combined-json.sh
-                      ./finalize-combined-json.sh
-                      """
-                    },
+                    }
                     "Generate HTML Report": {
                         // Run the Python script to generate the combined HTML report
                         sh """
