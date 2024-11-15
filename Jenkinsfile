@@ -14,7 +14,7 @@ environment {
 }
 
   stages {
-      /* stage('Build my Artifact') {
+     stage('Build my Artifact') {
             steps {
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
