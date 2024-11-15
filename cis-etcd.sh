@@ -25,13 +25,11 @@ docker run --rm \
 
 # Extract the number of failures from the JSON report
 total_fail=$(jq .Totals.total_fail < etcd-bench-report.json)
-# Initialize combined report as an array if it doesn't exist
-if [ ! -f combined-bench-report.json ]; then
-    echo "[]" > combined-bench-report.json
+# Append the raw JSON to the combined report, ensuring proper formatting
+if [[ -f combined-bench-report.json ]]; then
+    echo "," >> combined-bench-report.json
 fi
-
-# Append etcd results to the combined report
-jq '. += [{"target": "etcd", "Tests": .Tests}]' etcd-bench-report.json combined-bench-report.json > temp.json && mv temp.json combined-bench-report.json
+cat etcd-bench-report.json >> combined-bench-report.json
 
 # Check if there are any failures
 if [[ "$total_fail" -ge 3 ]]; then

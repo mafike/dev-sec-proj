@@ -177,13 +177,16 @@ environment {
                         KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-kubelet.sh
                         """
                     },
+                    "Finalized combine script": {
+                      sh './finalize-combined-json.sh'
+                    },
                     "Generate HTML Report": {
                         // Run the Python script to generate the combined HTML report
                         sh """
                         if [ -f combined-bench-report.json ]; then
                             python3 generate_kube_bench_report.py
                         else
-                            echo "kube-bench-report.json not found. Skipping HTML report generation."
+                            echo "combined-bench-report.json not found. Skipping HTML report generation."
                         fi
                         """
                     }
