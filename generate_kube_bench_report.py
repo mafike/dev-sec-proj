@@ -26,6 +26,9 @@ html = """
         .fail {
             background-color: #ffcccc;
         }
+        .warn {
+            background-color: #ffffcc;
+        }
         .pass {
             background-color: #ccffcc;
         }
@@ -45,18 +48,19 @@ html = """
         <tbody>
 """
 
-# Populate the HTML table
-for test in data.get("Tests", []):
-    for item in test.get("results", []):
-        result_class = "fail" if item["status"] == "FAIL" else "pass"
-        html += f"""
-        <tr class="{result_class}">
-            <td>{item['test_number']}</td>
-            <td>{item['test_desc']}</td>
-            <td>{item.get('remediation', 'N/A')}</td>
-            <td>{item['status']}</td>
-        </tr>
-        """
+# Iterate over controls and generate rows for the HTML table
+for control in data.get("Controls", []):
+    for test in control.get("tests", []):
+        for result in test.get("results", []):
+            result_class = "fail" if result["status"] == "FAIL" else "warn" if result["status"] == "WARN" else "pass"
+            html += f"""
+            <tr class="{result_class}">
+                <td>{result['test_number']}</td>
+                <td>{result['test_desc']}</td>
+                <td>{result.get('remediation', 'N/A')}</td>
+                <td>{result['status']}</td>
+            </tr>
+            """
 
 # Close the HTML structure
 html += """
