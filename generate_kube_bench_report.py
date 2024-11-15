@@ -15,60 +15,26 @@ html = """
 <head>
     <title>Kube-Bench Report</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
         table {
-            width: 100%;
             border-collapse: collapse;
-            margin: 20px auto;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
         }
         th, td {
-            padding: 12px 15px;
+            border: 1px solid black;
+            padding: 8px;
             text-align: left;
-            border: 1px solid #ddd;
         }
         th {
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
+            background-color: #f2f2f2;
         }
         .fail {
-            background-color: #f8d7da;
-            color: #721c24;
-            font-weight: bold;
+            background-color: #ffcccc;
         }
         .warn {
-            background-color: #fff3cd;
-            color: #856404;
-            font-weight: bold;
+            background-color: #fff5cc;
         }
         .pass {
-            background-color: #d4edda;
-            color: #155724;
-            font-weight: bold;
-        }
-        .center {
-            text-align: center;
-        }
-        @media screen and (max-width: 768px) {
-            table {
-                font-size: 14px;
-            }
-            th, td {
-                padding: 10px;
-            }
+            background-color: #ccffcc;
         }
     </style>
 </head>
@@ -77,10 +43,10 @@ html = """
     <table>
         <thead>
             <tr>
-                <th class="center" style="width: 10%;">ID</th>
-                <th style="width: 40%;">Description</th>
-                <th style="width: 40%;">Remediation</th>
-                <th class="center" style="width: 10%;">Result</th>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Remediation</th>
+                <th>Result</th>
             </tr>
         </thead>
         <tbody>
@@ -95,10 +61,10 @@ for control in data.get("Controls", []):
             remediation = result.get('remediation', 'N/A').replace('\n', '<br>').replace('\\', '\\\\')
             html += f"""
             <tr class="{result_class}">
-                <td class="center">{result.get('test_number', 'N/A')}</td>
+                <td>{result.get('test_number', 'N/A')}</td>
                 <td>{result.get('test_desc', 'N/A')}</td>
                 <td>{remediation}</td>
-                <td class="center">{status}</td>
+                <td>{status}</td>
             </tr>
             """
 
