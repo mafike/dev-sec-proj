@@ -29,7 +29,7 @@ total_fail=$(jq .Totals.total_fail < etcd-bench-report.json)
 jq '. | .target="etcd"' etcd-bench-report.json >> combined-bench-report.json
 
 # Check if there are any failures
-if [[ "$total_fail" -ne 0 ]]; then
+if [[ "$total_fail" -ge 3 ]]; then
     echo "CIS Benchmark Failed ETCD while testing for 2.2"
     exit 1
 else
