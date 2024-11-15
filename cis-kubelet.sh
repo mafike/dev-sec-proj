@@ -25,11 +25,13 @@ docker run --rm \
 
 # Extract the number of failures from the JSON report
 total_fail=$(jq .Totals.total_fail < kubelet-bench-report.json)
-# Append results to combined report with valid JSON structure
+# Initialize combined report as an array if it doesn't exist
 if [ ! -f combined-bench-report.json ]; then
     echo "[]" > combined-bench-report.json
 fi
-jq '. + [{"target": "kubelet", "Tests": .Tests}]' kubelet-bench-report.json combined-bench-report.json > temp.json && mv temp.json combined-bench-report.json
+
+# Append kubelet results to the combined report
+jq '. += [{"target": "kubelet", "Tests": .Tests}]' kubelet-bench-report.json combined-bench-report.json > temp.json && mv temp.json combined-bench-report.json
 # Check if there are any failures
 if [[ "$total_fail" -ge 3 ]]; then
     echo "CIS Benchmark Failed Kubelet while testing for 4.2.1, 4.2.2"
