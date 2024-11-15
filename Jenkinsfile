@@ -178,7 +178,10 @@ environment {
                         """
                     },
                     "Finalized combine script": {
-                      sh './finalize-combined-json.sh'
+                      sh """
+                      chmod +x finalize-combined-json.sh
+                      ./finalize-combined-json.sh
+                      """
                     },
                     "Generate HTML Report": {
                         // Run the Python script to generate the combined HTML report
