@@ -153,8 +153,6 @@ environment {
     }
    }
   } */
-
-  stages {
         stage('Run CIS Benchmark') {
             steps {
                 script {
@@ -169,7 +167,6 @@ environment {
             }
         }
     } 
-  }
     post {
      always {
      // junit 'target/surefire-reports/*.xml'
