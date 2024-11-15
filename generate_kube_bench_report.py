@@ -1,8 +1,8 @@
 import json
 
-# Load the JSON report
+# Load the combined JSON report
 try:
-    with open('kube-bench-report.json', 'r') as f:
+    with open('combined-bench.json', 'r') as f:
         data = json.load(f)
 except json.JSONDecodeError as e:
     print(f"Error parsing JSON: {e}")
@@ -13,7 +13,7 @@ html = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kube-Bench Report</title>
+    <title>Kube-Bench Combined Report</title>
     <style>
         table {
             border-collapse: collapse;
@@ -39,7 +39,13 @@ html = """
     </style>
 </head>
 <body>
-    <h1>Kube-Bench Report</h1>
+    <h1>Kube-Bench Combined Report</h1>
+"""
+
+# Process each benchmark type
+for benchmark in data.get("Benchmarks", []):
+    html += f"<h2>{benchmark['type'].capitalize()} Benchmarks</h2>"
+    html += """
     <table>
         <thead>
             <tr>
@@ -50,34 +56,35 @@ html = """
             </tr>
         </thead>
         <tbody>
-"""
-
-# Process the JSON and populate the HTML table
-for control in data.get("Controls", []):
-    for test in control.get("tests", []):
-        for result in test.get("results", []):
-            status = result["status"]
-            result_class = "fail" if status == "FAIL" else "warn" if status == "WARN" else "pass"
-            remediation = result.get('remediation', 'N/A').replace('\n', '<br>').replace('\\', '\\\\')
-            html += f"""
-            <tr class="{result_class}">
-                <td>{result.get('test_number', 'N/A')}</td>
-                <td>{result.get('test_desc', 'N/A')}</td>
-                <td>{remediation}</td>
-                <td>{status}</td>
-            </tr>
-            """
+    """
+    for control in benchmark.get("controls", []):
+        for test in control.get("tests", []):
+            for result in test.get("results", []):
+                status = result["status"]
+                result_class = "fail" if status == "FAIL" else "warn" if status == "WARN" else "pass"
+                remediation = result.get('remediation', 'N/A').replace('\n', '<br>').replace('\\', '\\\\')
+                html += f"""
+                <tr class="{result_class}">
+                    <td>{result.get('test_number', 'N/A')}</td>
+                    <td>{result.get('test_desc', 'N/A')}</td>
+                    <td>{remediation}</td>
+                    <td>{status}</td>
+                </tr>
+                """
+    html += """
+        </tbody>
+    </table>
+    """
 
 # Close the HTML structure
 html += """
-        </tbody>
-    </table>
 </body>
 </html>
 """
 
 # Save the HTML report
-with open('kube-bench-report.html', 'w') as f:
+with open('kube-bench-combined-report.html', 'w') as f:
     f.write(html)
 
-print("HTML report generated: kube-bench-report.html")
+print("HTML report generated: kube-bench-combined-report.html")
+
