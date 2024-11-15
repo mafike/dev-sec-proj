@@ -21,10 +21,10 @@ docker run --rm \
     run --targets master \
         --version 1.19 \
         --check 1.2.7,1.2.8,1.2.9 \
-        --json > kube-bench-report.json
+        --json > master-bench-report.json
 
 # Extract the number of failures
-total_fail=$(jq .Totals.total_fail < kube-bench-report.json)
+total_fail=$(jq .Totals.total_fail < master-bench-report.json)
 # Append results to the combined report
 jq '. | .target="master"' master-bench-report.json >> combined-bench-report.json
 
