@@ -155,9 +155,9 @@ environment {
   } */
         stage('Run CIS Benchmark') {
             steps {
-                script {
                     // Inject kubeconfig as an environment variable and run the script
                     withCredentials([string(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                      script {
                         sh """
                         chmod +x ${KUBE_BENCH_SCRIPT}
                         KUBECONFIG_CONTENT="\${KUBECONFIG}" ./${KUBE_BENCH_SCRIPT}
