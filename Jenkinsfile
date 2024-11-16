@@ -152,7 +152,7 @@ environment {
       input 'Do you want to Approve the Deployment to Production Environment/Namespace?'
     }
    }
-  } */
+  } 
        stage('Run CIS Benchmark') {
             steps {
         script {
@@ -193,7 +193,7 @@ environment {
             }
         }
     }
-   } 
+   } */
    stage('K8S Deployment - PROD') {
       steps {
         parallel(
