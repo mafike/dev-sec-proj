@@ -107,7 +107,7 @@ environment {
         )
       }
     } */
-        stage('Docker Build and Push') {
+       /* stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
@@ -239,7 +239,7 @@ environment {
         }
     }
    } */
-   stage('K8S Deployment - PROD') {
+  /* stage('K8S Deployment - PROD') {
       steps {
         parallel(
           "Deployment": {
@@ -272,7 +272,7 @@ environment {
         }
       }
     }
-}
+} */
     post {
      always {
      // junit 'target/surefire-reports/*.xml'
