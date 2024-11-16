@@ -61,7 +61,7 @@ environment {
           }
         )
       }
-    } 
+    } */
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
@@ -194,6 +194,23 @@ environment {
         }
     }
    } 
+   stage('K8S Deployment - PROD') {
+      steps {
+        parallel(
+          "Deployment": {
+            withKubeConfig([credentialsId: 'kubeconfig']) {
+              sh "sed -i 's#replace#${imageName}#g' k8s_PROD-deployment_service.yaml"
+              sh "kubectl -n prod apply -f k8s_PROD-deployment_service.yaml"
+            }
+          },
+          "Rollout Status": {
+            withKubeConfig([credentialsId: 'kubeconfig']) {
+              sh "bash k8s-PROD-deployment-rollout-status.sh"
+            }
+          }
+        )
+      }
+    }
 }
     post {
      always {
