@@ -236,13 +236,21 @@ environment {
      // dependencyCheckPublisher pattern: 'target/dependency-check-report.xml',
      // publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
-      sendNotification currentBuild.result
+      //sendNotification currentBuild.result
     }
      }
-    } 
-    /*
-    // success {
-
+    
+    
+   success {
+     script {
+        /* Use slackNotifier.groovy from shared library and provide current build result as parameter */
+        env.failedStage = "none"
+        env.emoji = ":white_check_mark: :tada: :thumbsup_all:"
+        sendNotification currentBuild.result
+      }
+    }
+}
+  /*
     // }
 
     // failure {
