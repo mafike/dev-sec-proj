@@ -283,7 +283,6 @@ environment {
     //  publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
       //sendNotification currentBuild.result
     }
-     }
     
     
    success {
@@ -305,6 +304,7 @@ environment {
       }
     }
   }
+}
 
 
 
