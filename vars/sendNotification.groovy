@@ -44,7 +44,7 @@ def call(String buildStatus = 'STARTED') {
           ],
           "accessory": [
             "type": "image",
-            "image_url": "https://github.com/mafike/dev-sec-proj/blob/master/slack-emojis/jenkins.png",
+            "image_url": "https://raw.githubusercontent.com/mafike/dev-sec-proj/refs/heads/master/slack-emojis/jenkins.png",
             "alt_text": "Slack Icon"
           ]
         ],
@@ -83,7 +83,7 @@ def call(String buildStatus = 'STARTED') {
           ], 
           "accessory": [
             "type": "image",
-            "image_url": "https://github.com/mafike/dev-sec-proj/blob/master/slack-emojis/k8s.png",
+            "image_url": "https://raw.githubusercontent.com/mafike/dev-sec-proj/refs/heads/master/slack-emojis/k8s.png",
             "alt_text": "Kubernetes Icon"
           ],
         ],
@@ -123,7 +123,7 @@ def call(String buildStatus = 'STARTED') {
           ], 
           "accessory": [
             "type": "image",
-            "image_url": "https://github.com/mafike/dev-sec-proj/blob/master/slack-emojis/github.png",
+            "image_url": "https://raw.githubusercontent.com/mafike/dev-sec-proj/refs/heads/master/slack-emojis/github.png",
             "alt_text": "Github Icon"
           ]
         ],
