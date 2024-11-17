@@ -255,7 +255,7 @@ environment {
           }
         )
       }
-    } */
+    } 
     stage('Integration Tests - PROD') {
       steps {
         script {
