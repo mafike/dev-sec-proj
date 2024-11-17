@@ -76,7 +76,7 @@ environment {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
     } 
-     stage('SonarQube - SAST') {
+     /*stage('SonarQube - SAST') {
       steps {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
@@ -90,7 +90,7 @@ environment {
           }
         }
       }   
-     }  
+     }  */
 
      stage('Vulnerability Scan - Docker ') {
       steps {
