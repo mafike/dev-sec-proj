@@ -65,7 +65,7 @@ environment {
               archive 'target/*.jar' //so tfhat they can be downloaded later
             }
         }   
-   /*   stage('Unit Tests - JUnit and Jacoco') {
+     stage('Unit Tests - JUnit and Jacoco') {
        steps {
         sh "mvn test"
         
@@ -76,7 +76,7 @@ environment {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
     } 
-    /* stage('SonarQube - SAST') {
+     stage('SonarQube - SAST') {
       steps {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
@@ -127,7 +127,7 @@ environment {
                 }
             }
         }  */
-    /* stage('Vulnerability Scan - Kubernetes') {
+    stage('Vulnerability Scan - Kubernetes') {
       steps {
         parallel(
           "OPA Scan": {
@@ -142,16 +142,16 @@ environment {
         )
       }
     }
-   /* stage('Kubernetes Deployment - DEV') {
+   /*stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
           sh "sed -i 's#replace#mafike1/numeric-app:${GIT_COMMIT}#g' k8s_deployment_service.yaml"
           sh "kubectl apply -f k8s_deployment_service.yaml --validate=false"
         }
       }
-    }
-  } */
-     /* stage('K8S Deployment - DEV') {
+    } */
+  
+     stage('K8S Deployment - DEV') {
       steps {
         parallel(
           "Deployment": {
@@ -167,7 +167,7 @@ environment {
         )
       }
     } 
-   /* stage('Integration Tests - DEV') {
+    stage('Integration Tests - DEV') {
       steps {
         script {
           try {
@@ -238,8 +238,8 @@ environment {
             }
         }
     }
-   } */
-  /* stage('K8S Deployment - PROD') {
+   } 
+   stage('K8S Deployment - PROD') {
       steps {
         parallel(
           "Deployment": {
@@ -275,11 +275,11 @@ environment {
 }
     post {
      always {
-     // junit 'target/surefire-reports/*.xml'
-     // jacoco execPattern: 'target/jacoco.exec'
-     // pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
-     // dependencyCheckPublisher pattern: 'target/dependency-check-report.xml',
-     // publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
+      junit 'target/surefire-reports/*.xml'
+      jacoco execPattern: 'target/jacoco.exec'
+      pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+      dependencyCheckPublisher pattern: 'target/dependency-check-report.xml',
+      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
       //sendNotification currentBuild.result
     } 
