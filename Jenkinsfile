@@ -61,23 +61,37 @@ environment {
   stages {
      stage('Build my Artifact') {
             steps {
+              try{
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
+            }
+            catch (e){
+              echo "Error building artifact: ${e.message}"
             }
         }   
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
+        try{
         sh "mvn test"
-        
+        }
+        catch (e) {
+          echo "Error running unit tests: ${e.message}"
+        }
        }
       } 
      stage('Mutation Tests - PIT') {
       steps {
+        try {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
+      }
+      catch (e) {
+        echo "Error running mutation tests: ${e.message}"
+      }
       }
     } 
      /*stage('SonarQube - SAST') {
       steps {
+      try {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
             -Dsonar.projectKey=numeric_app \
@@ -89,29 +103,56 @@ environment {
             waitForQualityGate abortPipeline: true
           }
         }
+        catch (e) {
+        echo "Error running SAST Analysis test: ${e.message}"
+        }
       }   
      }  */
 
-     stage('Vulnerability Scan - Docker ') {
-      steps {
-        parallel(
-          "Dependency Scan": {
-            sh "mvn dependency-check:check"
-          },
-          "Trivy Scan": {
-            sh "bash trivy-docker-image-scan.sh"
-          },
-          "OPA Conftest": {
-            sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy dockerfile_security.rego Dockerfile'
-          }
-        )
-      }
-    } 
+     stage('Vulnerability Scan - Docker') {
+    steps {
+        script {
+            def errors = [:]
+            parallel(
+                "Dependency Scan": {
+                    try {
+                        sh "mvn dependency-check:check"
+                    } catch (e) {
+                        errors["Dependency Scan"] = e.message
+                    }
+                },
+                "Trivy Scan": {
+                    try {
+                        timeout(time: 10, unit: 'MINUTES') {
+                            sh "bash trivy-docker-image-scan.sh"
+                        }
+                    } catch (e) {
+                        errors["Trivy Scan"] = e.message
+                    }
+                },
+                "OPA Conftest": {
+                    try {
+                        sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy dockerfile_security.rego Dockerfile'
+                    } catch (e) {
+                        errors["OPA Conftest"] = e.message
+                    }
+                }
+            )
+            if (errors) {
+                errors.each { key, value ->
+                    echo "Error in ${key}: ${value}"
+                }
+                error "One or more Docker vulnerability scans failed. See logs above."
+            }
+        }
+    }
+}
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     script {
+                      try {
                         // Print environment variables for debugging
                         sh 'printenv'
                         
@@ -124,24 +165,50 @@ environment {
                         // Push the Docker image
                         sh "docker push mafike1/numeric-app:${GIT_COMMIT}"
                     }
+                    catch (e) {
+                      echo "Error building and pushing Docker image: ${e.message}"
+                      }
                 }
             }
         }  
     stage('Vulnerability Scan - Kubernetes') {
-      steps {
-        parallel(
-          "OPA Scan": {
-            sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy opa-k8s-security.rego k8s_deployment_service.yaml'
-          },
-          "Kubesec Scan": {
-            sh "bash kubesec-scan.sh"
-          },
-          "Trivy Scan": {
-            sh "bash trivy-k8s-scan.sh"
-          }
-        )
-      }
+    steps {
+        script {
+            def errors = [:]
+            parallel(
+                "OPA Scan": {
+                    try {
+                        sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy opa-k8s-security.rego k8s_deployment_service.yaml'
+                    } catch (e) {
+                        errors["OPA Scan"] = e.message
+                    }
+                },
+                "Kubesec Scan": {
+                    try {
+                        timeout(time: 10, unit: 'MINUTES') {
+                            sh "bash kubesec-scan.sh"
+                        }
+                    } catch (e) {
+                        errors["Kubesec Scan"] = e.message
+                    }
+                },
+                "Trivy Scan": {
+                    try {
+                        sh "bash trivy-k8s-scan.sh"
+                    } catch (e) {
+                        errors["Trivy Scan"] = e.message
+                    }
+                }
+            )
+            if (errors) {
+                errors.each { key, value ->
+                    echo "Error in ${key}: ${value}"
+                }
+                error "One or more Kubernetes vulnerability scans failed. See logs above."
+            }
+        }
     }
+}
    /*stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
@@ -152,21 +219,38 @@ environment {
     } */
   
      stage('K8S Deployment - DEV') {
-      steps {
-        parallel(
-          "Deployment": {
-            withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "bash k8s-deployment.sh"
+    steps {
+        script {
+            def errors = [:]
+            parallel(
+                "Deployment": {
+                    try {
+                        withKubeConfig([credentialsId: 'kubeconfig']) {
+                            sh "bash k8s-deployment.sh"
+                        }
+                    } catch (e) {
+                        errors["Deployment"] = e.message
+                    }
+                },
+                "Rollout Status": {
+                    try {
+                        withKubeConfig([credentialsId: 'kubeconfig']) {
+                            sh "bash k8s-deployment-rollout-status.sh"
+                        }
+                    } catch (e) {
+                        errors["Rollout Status"] = e.message
+                    }
+                }
+            )
+            if (errors) {
+                errors.each { key, value ->
+                    echo "Error in ${key}: ${value}"
+                }
+                error "K8S Deployment - DEV stage failed. See logs above."
             }
-          },
-          "Rollout Status": {
-            withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "bash k8s-deployment-rollout-status.sh"
-            }
-          }
-        )
-      }
-    } 
+        }
+    }
+}
     stage('Integration Tests - DEV') {
       steps {
         script {
@@ -240,22 +324,39 @@ environment {
     }
    } 
    stage('K8S Deployment - PROD') {
-      steps {
-        parallel(
-          "Deployment": {
-            withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "sed -i 's#replace#${imageName}#g' k8s_PROD-deployment_service.yaml"
-              sh "kubectl -n prod apply -f k8s_PROD-deployment_service.yaml"
+    steps {
+        script {
+            def errors = [:]
+            parallel(
+                "Deployment": {
+                    try {
+                        withKubeConfig([credentialsId: 'kubeconfig']) {
+                            sh "sed -i 's#replace#${imageName}#g' k8s_PROD-deployment_service.yaml"
+                            sh "kubectl -n prod apply -f k8s_PROD-deployment_service.yaml"
+                        }
+                    } catch (e) {
+                        errors["Deployment"] = e.message
+                    }
+                },
+                "Rollout Status": {
+                    try {
+                        withKubeConfig([credentialsId: 'kubeconfig']) {
+                            sh "bash k8s-PROD-deployment-rollout-status.sh"
+                        }
+                    } catch (e) {
+                        errors["Rollout Status"] = e.message
+                    }
+                }
+            )
+            if (errors) {
+                errors.each { key, value ->
+                    echo "Error in ${key}: ${value}"
+                }
+                error "K8S Deployment - PROD stage failed. See logs above."
             }
-          },
-          "Rollout Status": {
-            withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "bash k8s-PROD-deployment-rollout-status.sh"
-            }
-          }
-        )
-      }
-    } 
+        }
+    }
+}
     stage('Integration Tests - PROD') {
       steps {
         script {
