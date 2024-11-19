@@ -61,6 +61,7 @@ environment {
   stages {
      stage('Build my Artifact') {
             steps {
+              script {
               try{
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
@@ -68,10 +69,12 @@ environment {
             catch (e){
               echo "Error building artifact: ${e.message}"
             }
-        }   
+         }   
+        }
         }
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
+        script{
         try{
         sh "mvn test"
         }
@@ -79,9 +82,11 @@ environment {
           echo "Error running unit tests: ${e.message}"
         }
        }
+       }
       } 
      stage('Mutation Tests - PIT') {
       steps {
+        script{
         try {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
@@ -89,9 +94,11 @@ environment {
         echo "Error running mutation tests: ${e.message}"
       }
       }
+      }
     } 
      /* stage('SonarQube - SAST') {
       steps {
+      script{
       try {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
@@ -108,6 +115,7 @@ environment {
         echo "Error running SAST Analysis test: ${e.message}"
         }
       }   
+      }
        } 
       } */
 
