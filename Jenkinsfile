@@ -61,8 +61,8 @@ environment {
   stages {
      stage('Build my Artifact') {
             steps {
-              script {
               cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'build-cache') {
+              script {
               try{
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
@@ -77,7 +77,6 @@ environment {
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
-        cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'unit-tests-cache') {
         try{
         sh "mvn test"
         }
@@ -86,12 +85,10 @@ environment {
         }
        }
        }
-      }
-     }
+      } 
      stage('Mutation Tests - PIT') {
       steps {
         script{
-        cache(maxCacheSize: '1GB', includes: '**/target/**', cacheName: 'PIT-cache') {
         try {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
@@ -100,12 +97,10 @@ environment {
       }
       }
       }
-      }
     } 
      /* stage('SonarQube - SAST') {
       steps {
       script{
-      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'SAST-cache') {
       try {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
@@ -123,14 +118,12 @@ environment {
         }
       }   
       }
-      }
        } 
       } */
 
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
-          cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-scan-cache') {
             def errors = [:]
             parallel(
                 "Dependency Scan": {
@@ -165,14 +158,12 @@ environment {
             }
         }
     }
-    }
 }
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     script {
-                      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-build-cache') {
                       try {
                         // Print environment variables for debugging
                         sh 'printenv'
@@ -193,11 +184,9 @@ environment {
             }
         }  
       }
-     }
     stage('Vulnerability Scan - Kubernetes') {
     steps {
         script {
-          cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'k8-cache') {
             def errors = [:]
             parallel(
                 "OPA Scan": {
@@ -232,7 +221,6 @@ environment {
             }
         }
     }
-  }
 }
    /*stage('Kubernetes Deployment - DEV') {
       steps {
@@ -247,7 +235,6 @@ environment {
     steps {
         script {
             def errors = [:]
-            cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'k8s-dev-deploy-cache') {
             parallel(
                 "Deployment": {
                     try {
@@ -276,12 +263,10 @@ environment {
             }
         }
     }
-    }
 }
     stage('Integration Tests - DEV') {
       steps {
         script {
-          cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'dev-int-test-cache') {
           try {
             withKubeConfig([credentialsId: 'kubeconfig']) {
               sh "bash integration-test.sh"
@@ -295,7 +280,6 @@ environment {
         }
       }
     } 
-  }
 
   stage('OWASP ZAP - DAST') {
       steps {
@@ -315,7 +299,6 @@ environment {
             steps {
         script {
             // Use the kubeconfig file credential once for all parallel tasks
-            cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'cis-cache') {
             withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                 parallel(
                     "Run Master Benchmark": {
@@ -352,7 +335,6 @@ environment {
             }
         }
     }
-   }
    } 
    stage('K8S Deployment - PROD') {
     steps {
