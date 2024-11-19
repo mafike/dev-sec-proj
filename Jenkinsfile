@@ -69,6 +69,7 @@ environment {
               echo "Error building artifact: ${e.message}"
             }
         }   
+        }
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         try{
@@ -89,7 +90,7 @@ environment {
       }
       }
     } 
-     /*stage('SonarQube - SAST') {
+     /* stage('SonarQube - SAST') {
       steps {
       try {
         withSonarQubeEnv('sonarqube') {
@@ -107,7 +108,8 @@ environment {
         echo "Error running SAST Analysis test: ${e.message}"
         }
       }   
-     }  */
+       } 
+      } */
 
      stage('Vulnerability Scan - Docker') {
     steps {
@@ -171,6 +173,7 @@ environment {
                 }
             }
         }  
+      }
     stage('Vulnerability Scan - Kubernetes') {
     steps {
         script {
@@ -373,7 +376,7 @@ environment {
         }
       }
     }
-}
+  }
     post {
      always {
       junit 'target/surefire-reports/*.xml'
