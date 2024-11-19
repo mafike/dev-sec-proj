@@ -61,8 +61,8 @@ environment {
   stages {
      stage('Build my Artifact') {
             steps {
-              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'build-cache') {
               script {
+              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'build-cache') {
               try{
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
