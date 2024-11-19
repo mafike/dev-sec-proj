@@ -61,6 +61,7 @@ environment {
   stages {
      stage('Build my Artifact') {
             steps {
+              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'build-cache') {
               script {
               try{
               sh "mvn clean package -DskipTests=true"
@@ -72,8 +73,10 @@ environment {
          }   
         }
         }
+     }
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
+        cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'unit-tests-cache') {
         script{
         try{
         sh "mvn test"
@@ -83,9 +86,11 @@ environment {
         }
        }
        }
-      } 
+      }
+     }
      stage('Mutation Tests - PIT') {
       steps {
+        cache(maxCacheSize: '1GB', includes: '**/target/**', cacheName: 'PIT-cache') {
         script{
         try {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
@@ -95,9 +100,11 @@ environment {
       }
       }
       }
+      }
     } 
      /* stage('SonarQube - SAST') {
       steps {
+      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'SAST-cache') {
       script{
       try {
         withSonarQubeEnv('sonarqube') {
@@ -116,11 +123,13 @@ environment {
         }
       }   
       }
+      }
        } 
       } */
 
      stage('Vulnerability Scan - Docker') {
     steps {
+      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-scan-cache') {
         script {
             def errors = [:]
             parallel(
@@ -156,11 +165,13 @@ environment {
             }
         }
     }
+    }
 }
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                  cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-build-cache') {
                     script {
                       try {
                         // Print environment variables for debugging
@@ -182,8 +193,10 @@ environment {
             }
         }  
       }
+     }
     stage('Vulnerability Scan - Kubernetes') {
     steps {
+      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'k8-cache') {
         script {
             def errors = [:]
             parallel(
@@ -219,6 +232,7 @@ environment {
             }
         }
     }
+  }
 }
    /*stage('Kubernetes Deployment - DEV') {
       steps {
@@ -233,6 +247,7 @@ environment {
     steps {
         script {
             def errors = [:]
+            cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'k8s-dev-deploy-cache') {
             parallel(
                 "Deployment": {
                     try {
@@ -261,9 +276,11 @@ environment {
             }
         }
     }
+    }
 }
     stage('Integration Tests - DEV') {
       steps {
+        cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'dev-int-test-cache') {
         script {
           try {
             withKubeConfig([credentialsId: 'kubeconfig']) {
@@ -278,6 +295,7 @@ environment {
         }
       }
     } 
+  }
 
   stage('OWASP ZAP - DAST') {
       steps {
@@ -295,6 +313,7 @@ environment {
   } 
        stage('Run CIS Benchmark') {
             steps {
+              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'cis-cache') {
         script {
             // Use the kubeconfig file credential once for all parallel tasks
             withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
@@ -333,6 +352,7 @@ environment {
             }
         }
     }
+   }
    } 
    stage('K8S Deployment - PROD') {
     steps {
