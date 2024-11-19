@@ -62,7 +62,7 @@ environment {
      stage('Build my Artifact') {
             steps {
               script {
-              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'build-cache') {
+              cache(maxCacheSize: '5GB', includes: '**/target/**', cacheName: 'build-cache') {
               try{
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
@@ -73,7 +73,6 @@ environment {
          }   
         }
         }
-     }
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
