@@ -61,8 +61,8 @@ environment {
   stages {
      stage('Build my Artifact') {
             steps {
-              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'build-cache') {
               script {
+              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'build-cache') {
               try{
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
@@ -76,8 +76,8 @@ environment {
      }
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
-        cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'unit-tests-cache') {
         script{
+        cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'unit-tests-cache') {
         try{
         sh "mvn test"
         }
@@ -90,8 +90,8 @@ environment {
      }
      stage('Mutation Tests - PIT') {
       steps {
-        cache(maxCacheSize: '1GB', includes: '**/target/**', cacheName: 'PIT-cache') {
         script{
+        cache(maxCacheSize: '1GB', includes: '**/target/**', cacheName: 'PIT-cache') {
         try {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
@@ -104,8 +104,8 @@ environment {
     } 
      /* stage('SonarQube - SAST') {
       steps {
-      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'SAST-cache') {
       script{
+      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'SAST-cache') {
       try {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
@@ -129,8 +129,8 @@ environment {
 
      stage('Vulnerability Scan - Docker') {
     steps {
-      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-scan-cache') {
         script {
+          cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-scan-cache') {
             def errors = [:]
             parallel(
                 "Dependency Scan": {
@@ -171,8 +171,8 @@ environment {
             steps {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                  cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-build-cache') {
                     script {
+                      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'Docker-build-cache') {
                       try {
                         // Print environment variables for debugging
                         sh 'printenv'
@@ -196,8 +196,8 @@ environment {
      }
     stage('Vulnerability Scan - Kubernetes') {
     steps {
-      cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'k8-cache') {
         script {
+          cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'k8-cache') {
             def errors = [:]
             parallel(
                 "OPA Scan": {
@@ -280,8 +280,8 @@ environment {
 }
     stage('Integration Tests - DEV') {
       steps {
-        cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'dev-int-test-cache') {
         script {
+          cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'dev-int-test-cache') {
           try {
             withKubeConfig([credentialsId: 'kubeconfig']) {
               sh "bash integration-test.sh"
@@ -313,9 +313,9 @@ environment {
   } 
        stage('Run CIS Benchmark') {
             steps {
-              cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'cis-cache') {
         script {
             // Use the kubeconfig file credential once for all parallel tasks
+            cache(maxCacheSize: '2GB', includes: '**/target/**', cacheName: 'cis-cache') {
             withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                 parallel(
                     "Run Master Benchmark": {
