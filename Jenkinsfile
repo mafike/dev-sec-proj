@@ -62,6 +62,9 @@ environment {
      stage('Build my Artifact') {
             steps {
               script {
+                cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
               try{
               sh "mvn clean package -DskipTests=true"
               archive 'target/*.jar' //so tfhat they can be downloaded later
