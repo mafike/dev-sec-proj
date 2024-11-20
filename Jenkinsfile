@@ -79,6 +79,9 @@ environment {
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
+        cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
         try{
         sh "mvn test"
         }
@@ -87,10 +90,14 @@ environment {
         }
        }
        }
+       }
       } 
      stage('Mutation Tests - PIT') {
       steps {
         script{
+          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
         try {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
@@ -99,10 +106,14 @@ environment {
       }
       }
       }
+      }
     } 
      /* stage('SonarQube - SAST') {
       steps {
       script{
+      cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
       try {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
@@ -120,12 +131,16 @@ environment {
         }
       }   
       }
+      }
        } 
       } */
 
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
+          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             def errors = [:]
             parallel(
                 "Dependency Scan": {
@@ -159,6 +174,7 @@ environment {
                 error "One or more Docker vulnerability scans failed. See logs above."
             }
         }
+        }
     }
 }
         stage('Docker Build and Push') {
@@ -166,6 +182,9 @@ environment {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     script {
+                      cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
                       try {
                         // Print environment variables for debugging
                         sh 'printenv'
@@ -184,11 +203,15 @@ environment {
                       }
                 }
             }
+                }
         }  
       }
     stage('Vulnerability Scan - Kubernetes') {
     steps {
         script {
+          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             def errors = [:]
             parallel(
                 "OPA Scan": {
@@ -222,6 +245,7 @@ environment {
                 error "One or more Kubernetes vulnerability scans failed. See logs above."
             }
         }
+        }
     }
 }
    /*stage('Kubernetes Deployment - DEV') {
@@ -236,6 +260,9 @@ environment {
      stage('K8S Deployment - DEV') {
     steps {
         script {
+          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             def errors = [:]
             parallel(
                 "Deployment": {
@@ -264,11 +291,15 @@ environment {
                 error "K8S Deployment - DEV stage failed. See logs above."
             }
         }
+        }
     }
 }
     stage('Integration Tests - DEV') {
       steps {
         script {
+          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
           try {
             withKubeConfig([credentialsId: 'kubeconfig']) {
               sh "bash integration-test.sh"
@@ -279,6 +310,7 @@ environment {
             }
             throw e
           }
+        }
         }
       }
     } 
@@ -300,6 +332,9 @@ environment {
        stage('Run CIS Benchmark') {
             steps {
         script {
+          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             // Use the kubeconfig file credential once for all parallel tasks
             withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                 parallel(
@@ -335,6 +370,7 @@ environment {
                     }
                 )
             }
+        }
         }
     }
    } 
