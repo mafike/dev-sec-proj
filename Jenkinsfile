@@ -46,7 +46,7 @@ List < Map > getFailedStages(RunWrapper build) {
 @Library('slack') _
 pipeline {
   agent {
-    Kubernetes {
+    kubernetes {
       label "shared-agent"
       yaml mavenAgent()
     }
