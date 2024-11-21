@@ -424,7 +424,6 @@ environment {
   }
     post {
      always {
-      node('master') {
       // Publish JUnit test results
       junit 'target/surefire-reports/*.xml'
       // Record code coverage using the Coverage Plugin
@@ -435,7 +434,6 @@ environment {
       dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
-    } 
      }
     
     
