@@ -428,7 +428,11 @@ environment {
       // Publish JUnit test results
       junit 'target/surefire-reports/*.xml'
       // Record code coverage using the Coverage Plugin
-      recordCoverage tools: [jacocoAdapter('target/site/jacoco/jacoco.xml')]
+      recordCoverage tools: [jacocoAdapter('target/site/jacoco/jacoco.xml')],
+                        globalThresholds: [
+                        lineCoverage(80, 60),
+                        branchCoverage(70, 50)
+                    ]
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
       dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
@@ -460,13 +464,6 @@ environment {
             } catch (e) {
                 echo "Error fetching failed stages or sending failure notification: ${e.message}"
             }
-        }
-    }
-
-    cleanup {
-        node('shared-agent') {
-            echo "Cleaning up workspace..."
-            deleteDir()
         }
     }
 }
