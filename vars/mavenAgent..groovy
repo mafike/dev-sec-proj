@@ -2,6 +2,8 @@ def call() {
     return """
 apiVersion: v1
 kind: Pod
+metadata:
+  label: shared-agent
 spec:
   containers:
   - name: maven
