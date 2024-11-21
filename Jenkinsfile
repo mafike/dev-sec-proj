@@ -432,6 +432,7 @@ environment {
   }
     post {
      always {
+      node{
       junit 'target/surefire-reports/*.xml'
       jacoco execPattern: 'target/jacoco.exec'
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
@@ -439,6 +440,7 @@ environment {
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
     } 
+     }
     
     
    success {
