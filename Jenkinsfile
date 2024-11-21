@@ -45,7 +45,12 @@ List < Map > getFailedStages(RunWrapper build) {
 
 @Library('slack') _
 pipeline {
-  agent any
+  agent {
+    Kubernetes {
+      label "shared-agent"
+      yaml mavenAgent()
+    }
+  }
   
 environment {
     KUBE_BENCH_SCRIPT = "cis-master.sh"
