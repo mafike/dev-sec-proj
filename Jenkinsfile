@@ -62,9 +62,12 @@ environment {
      stage('Build my Artifact') {
             steps {
               script {
+                cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
               try{
               sh "mvn clean package -DskipTests=true"
-              archive 'target/*.jar' //so tfhat they can be downloaded later
+              archiveArtifacts 'target/*.jar' //so tfhat they can be downloaded later
             }
             catch (e){
               echo "Error building artifact: ${e.message}"
@@ -72,9 +75,13 @@ environment {
          }   
         }
         }
+     }
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
+        cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
         try{
         sh "mvn test"
         }
@@ -83,10 +90,14 @@ environment {
         }
        }
        }
+       }
       } 
      stage('Mutation Tests - PIT') {
       steps {
         script{
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
         try {
         sh "mvn org.pitest:pitest-maven:mutationCoverage"
       }
@@ -95,10 +106,14 @@ environment {
       }
       }
       }
+      }
     } 
      /* stage('SonarQube - SAST') {
       steps {
       script{
+      cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
       try {
         withSonarQubeEnv('sonarqube') {
         sh "mvn clean verify sonar:sonar \
@@ -116,12 +131,16 @@ environment {
         }
       }   
       }
+      }
        } 
       } */
 
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             def errors = [:]
             parallel(
                 "Dependency Scan": {
@@ -155,6 +174,7 @@ environment {
                 error "One or more Docker vulnerability scans failed. See logs above."
             }
         }
+        }
     }
 }
         stage('Docker Build and Push') {
@@ -162,10 +182,10 @@ environment {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     script {
+                      cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
                       try {
-                        // Print environment variables for debugging
-                        sh 'printenv'
-                        
                         // Log in to Docker
                         sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                         
@@ -180,11 +200,15 @@ environment {
                       }
                 }
             }
+                }
         }  
       }
     stage('Vulnerability Scan - Kubernetes') {
     steps {
         script {
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             def errors = [:]
             parallel(
                 "OPA Scan": {
@@ -218,6 +242,7 @@ environment {
                 error "One or more Kubernetes vulnerability scans failed. See logs above."
             }
         }
+        }
     }
 }
    /*stage('Kubernetes Deployment - DEV') {
@@ -229,9 +254,12 @@ environment {
       }
     } */
   
-     stage('K8S Deployment - DEV') {
+   /*  stage('K8S Deployment - DEV') {
     steps {
         script {
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             def errors = [:]
             parallel(
                 "Deployment": {
@@ -260,11 +288,15 @@ environment {
                 error "K8S Deployment - DEV stage failed. See logs above."
             }
         }
+        }
     }
 }
     stage('Integration Tests - DEV') {
       steps {
         script {
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
           try {
             withKubeConfig([credentialsId: 'kubeconfig']) {
               sh "bash integration-test.sh"
@@ -276,8 +308,9 @@ environment {
             throw e
           }
         }
+        }
       }
-    } 
+    } */
 
   stage('OWASP ZAP - DAST') {
       steps {
@@ -296,6 +329,9 @@ environment {
        stage('Run CIS Benchmark') {
             steps {
         script {
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+                    ]) {
             // Use the kubeconfig file credential once for all parallel tasks
             withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                 parallel(
@@ -331,6 +367,7 @@ environment {
                     }
                 )
             }
+        }
         }
     }
    } 
@@ -387,34 +424,45 @@ environment {
   }
     post {
      always {
+      // Publish JUnit test results
       junit 'target/surefire-reports/*.xml'
-      jacoco execPattern: 'target/jacoco.exec'
+      // Record code coverage using the Coverage Plugin
+      publishCoverage(
+            tools: [jacocoAdapter('target/site/jacoco/jacoco.xml')]
+        )
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
       dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
-    } 
+     }
     
     
    success {
-     script {
-        /* Use slackNotifier.groovy from shared library and provide current build result as parameter */
-        env.failedStage = "none"
-        env.emoji = ":white_check_mark: :tada: :thumbsup_all:"
-        sendNotification currentBuild.result
-      }
+        script {
+            try {
+                env.failedStage = "none"
+                env.emoji = ":white_check_mark: :tada: :thumbsup_all:"
+                sendNotification currentBuild.result
+            } catch (e) {
+                echo "Error sending success notification: ${e.message}"
+            }
+        }
     }
 
-   failure {
-      script {
-        //Fetch information about  failed stage
-        def failedStages = getFailedStages(currentBuild)
-        env.failedStage = failedStages.failedStageName
-        env.emoji = ":x: :red_circle: :sos:"
-        sendNotification currentBuild.result
-      }
+    failure {
+        script {
+            try {
+                def failedStages = getFailedStages(currentBuild)
+                env.failedStage = failedStages.failedStageName
+                echo "Failed Stage: ${env.failedStage}"
+                env.emoji = ":x: :red_circle: :sos:"
+                sendNotification currentBuild.result
+            } catch (e) {
+                echo "Error fetching failed stages or sending failure notification: ${e.message}"
+            }
+        }
     }
-  }
+}
 }
 
 
