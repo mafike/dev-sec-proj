@@ -62,7 +62,7 @@ environment {
      stage('Build my Artifact') {
             steps {
               script {
-                cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
               try{
@@ -79,7 +79,7 @@ environment {
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
-        cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+        cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
         try{
@@ -95,7 +95,7 @@ environment {
      stage('Mutation Tests - PIT') {
       steps {
         script{
-          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
         try {
@@ -111,7 +111,7 @@ environment {
      /* stage('SonarQube - SAST') {
       steps {
       script{
-      cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+      cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
       try {
@@ -138,7 +138,7 @@ environment {
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
-          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
             def errors = [:]
@@ -182,7 +182,7 @@ environment {
                 // Use withCredentials to access Docker credentials
                 withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     script {
-                      cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+                      cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
                       try {
@@ -209,7 +209,7 @@ environment {
     stage('Vulnerability Scan - Kubernetes') {
     steps {
         script {
-          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
             def errors = [:]
@@ -260,7 +260,7 @@ environment {
      stage('K8S Deployment - DEV') {
     steps {
         script {
-          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
             def errors = [:]
@@ -297,7 +297,7 @@ environment {
     stage('Integration Tests - DEV') {
       steps {
         script {
-          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
           try {
@@ -332,7 +332,7 @@ environment {
        stage('Run CIS Benchmark') {
             steps {
         script {
-          cache(maxCacheSize: 5368709120, defaultBranch: 'main', caches: [
+          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
             // Use the kubeconfig file credential once for all parallel tasks
