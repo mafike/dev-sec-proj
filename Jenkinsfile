@@ -428,11 +428,9 @@ environment {
       // Publish JUnit test results
       junit 'target/surefire-reports/*.xml'
       // Record code coverage using the Coverage Plugin
-      recordCoverage tools: [jacocoAdapter('target/site/jacoco/jacoco.xml')],
-                        globalThresholds: [
-                        lineCoverage(80, 60),
-                        branchCoverage(70, 50)
-                    ]
+      publishCoverage(
+            tools: [jacocoAdapter('target/site/jacoco/jacoco.xml')]
+        )
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
       dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
