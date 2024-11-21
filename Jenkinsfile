@@ -430,48 +430,66 @@ environment {
       }
     }
   }
-    post {
-     always {
-      node('shared-agent') {
-      junit 'target/surefire-reports/*.xml'
-      jacoco execPattern: 'target/jacoco.exec'
-      pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
-      dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
-      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
-      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
-    } 
-     }
-    
-    
-   success {
-     script {
-      try {
-        /* Use slackNotifier.groovy from shared library and provide current build result as parameter */
-        env.failedStage = "none"
-        env.emoji = ":white_check_mark: :tada: :thumbsup_all:"
-        sendNotification currentBuild.result
-      }
+  post {
+    always {
+        node('shared-agent') {
+            echo "Publishing reports..."
+            parallel(
+                "JUnit Report": {
+                    junit 'target/surefire-reports/*.xml'
+                },
+                "Jacoco Report": {
+                    jacoco execPattern: 'target/jacoco.exec'
+                },
+                "Mutation Report": {
+                    pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+                },
+                "Dependency Check Report": {
+                    dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
+                },
+                "OWASP ZAP Report": {
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
+                },
+                "Kube-Bench Report": {
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
+                }
+            )
+        }
     }
-    catch (e) {
-      echo "Error sending notification: ${e.message}"
-    }
-   }
 
-   failure {
-      script {
-        try {
-        //Fetch information about  failed stage
-        def failedStages = getFailedStages(currentBuild)
-        env.failedStage = failedStages.failedStageName
-        env.emoji = ":x: :red_circle: :sos:"
-        sendNotification currentBuild.result
-      }
+    success {
+        script {
+            try {
+                env.failedStage = "none"
+                env.emoji = ":white_check_mark: :tada: :thumbsup_all:"
+                sendNotification currentBuild.result
+            } catch (e) {
+                echo "Error sending success notification: ${e.message}"
+            }
+        }
     }
-    catch (e) { 
-      echo "Error sending notification: ${e.message}"
+
+    failure {
+        script {
+            try {
+                def failedStages = getFailedStages(currentBuild)
+                env.failedStage = failedStages.failedStageName
+                echo "Failed Stage: ${env.failedStage}"
+                env.emoji = ":x: :red_circle: :sos:"
+                sendNotification currentBuild.result
+            } catch (e) {
+                echo "Error fetching failed stages or sending failure notification: ${e.message}"
+            }
+        }
     }
-  }
- }
+
+    cleanup {
+        node('shared-agent') {
+            echo "Cleaning up workspace..."
+            deleteDir()
+        }
+    }
+}
 }
 
 
