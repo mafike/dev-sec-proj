@@ -432,7 +432,7 @@ environment {
   }
     post {
      always {
-      node {
+      node('shared-agent') {
       junit 'target/surefire-reports/*.xml'
       jacoco execPattern: 'target/jacoco.exec'
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
@@ -445,15 +445,21 @@ environment {
     
    success {
      script {
+      try {
         /* Use slackNotifier.groovy from shared library and provide current build result as parameter */
         env.failedStage = "none"
         env.emoji = ":white_check_mark: :tada: :thumbsup_all:"
         sendNotification currentBuild.result
       }
     }
+    catch (e) {
+      echo "Error sending notification: ${e.message}"
+    }
+   }
 
    failure {
       script {
+        try {
         //Fetch information about  failed stage
         def failedStages = getFailedStages(currentBuild)
         env.failedStage = failedStages.failedStageName
@@ -461,8 +467,13 @@ environment {
         sendNotification currentBuild.result
       }
     }
+    catch (e) { 
+      echo "Error sending notification: ${e.message}"
+    }
   }
+ }
 }
+
 
 
 
