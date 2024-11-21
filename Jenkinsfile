@@ -430,49 +430,20 @@ environment {
       }
     }
   }
-  post {
-    always {
-        node('shared-agent') {
-            echo "Publishing reports..."
-            // Sequential execution of reporting steps
-            stage('JUnit Report') {
-                junit 'target/surefire-reports/*.xml'
-            }
-            stage('Jacoco Report') {
-                jacoco execPattern: 'target/jacoco.exec'
-            }
-            stage('Mutation Report') {
-                pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
-            }
-            stage('Dependency Check Report') {
-                dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
-            }
-            stage('OWASP ZAP Report') {
-                publishHTML([
-                    allowMissing: false, 
-                    alwaysLinkToLastBuild: true, 
-                    keepAll: true, 
-                    reportDir: 'owasp-zap-report', 
-                    reportFiles: 'zap_report.html', 
-                    reportName: 'OWASP ZAP HTML Report', 
-                    reportTitles: 'OWASP ZAP HTML Report'
-                ])
-            }
-            stage('Kube-Bench Report') {
-                publishHTML([
-                    allowMissing: false, 
-                    alwaysLinkToLastBuild: true, 
-                    keepAll: true, 
-                    reportDir: '.', 
-                    reportFiles: 'kube-bench-combined-report.html', 
-                    reportName: 'Kube-Bench HTML Report', 
-                    reportTitles: 'Kube-Bench HTML Report'
-                ])
-            }
-        }
-    }
-
-    success {
+    post {
+     always {
+      node('shared-agent') {
+      junit 'target/surefire-reports/*.xml'
+      jacoco execPattern: 'target/jacoco.exec'
+      pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
+      dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
+      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
+      publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: '.', reportFiles: 'kube-bench-combined-report.html', reportName: 'Kube-Bench HTML Report', reportTitles: 'Kube-Bench HTML Report'])
+    } 
+     }
+    
+    
+   success {
         script {
             try {
                 env.failedStage = "none"
@@ -506,7 +477,3 @@ environment {
     }
 }
 }
-
-
-
-
