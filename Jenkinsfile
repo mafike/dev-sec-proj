@@ -45,12 +45,7 @@ List < Map > getFailedStages(RunWrapper build) {
 
 @Library('slack') _
 pipeline {
-  agent {
-    kubernetes {
-      label "shared-agent"
-      yaml mavenAgent()
-    }
-  }
+  agent any
   
 environment {
     KUBE_BENCH_SCRIPT = "cis-master.sh"
@@ -432,7 +427,7 @@ environment {
   }
     post {
      always {
-      node('shared-agent') {
+      node('master') {
       junit 'target/surefire-reports/*.xml'
       jacoco execPattern: 'target/jacoco.exec'
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
