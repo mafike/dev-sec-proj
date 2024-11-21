@@ -186,9 +186,6 @@ environment {
                         arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
                     ]) {
                       try {
-                        // Print environment variables for debugging
-                        sh 'printenv'
-                        
                         // Log in to Docker
                         sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                         
@@ -428,8 +425,10 @@ environment {
     post {
      always {
       node('master') {
+      // Publish JUnit test results
       junit 'target/surefire-reports/*.xml'
-      jacoco execPattern: 'target/jacoco.exec'
+      // Record code coverage using the Coverage Plugin
+      recordCoverage tools: [jacocoAdapter('target/site/jacoco/jacoco.xml')]
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
       dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])

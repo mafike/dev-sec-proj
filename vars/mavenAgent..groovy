@@ -18,11 +18,8 @@ spec:
     image: bitnami/kubectl:latest
     command: ['cat']
     tty: true
-  volumes:
-  - name: shared-workspace
-    emptyDir: {}
-  volumeMounts:
-  - mountPath: /home/jenkins/agent
-    name: shared-workspace
-"""
+  - name: utility
+    image: busybox
+    command: ['cat']
+    tty: true
 }
