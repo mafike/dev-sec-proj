@@ -64,7 +64,7 @@
 
 	<build>
 		<plugins>
-			<!-- JaCoCo -->
+			<!-- Jacoco -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -82,9 +82,19 @@
 							<goal>report</goal>
 						</goals>
 					</execution>
+					<execution>
+						<id>report-aggregate</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report-aggregate</goal>
+						</goals>
+						<configuration>
+							<dataFile>target/jacoco.exec</dataFile>
+							<outputDirectory>target/site/jacoco</outputDirectory>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
-		
 			 <!-- Pit mutation-->
 			 <plugin>
 				<groupId>org.pitest</groupId>
