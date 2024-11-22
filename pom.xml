@@ -83,6 +83,10 @@
 					  </goals>
 				   </execution>
 				</executions>
+				<configuration>
+                                  <dataFile>target/jacoco.exec</dataFile> <!-- Path to the exec file -->
+                                  <outputDirectory>target/site/jacoco</outputDirectory> <!-- Where reports are saved -->
+                                </configuration>
 			 </plugin>
 			 <!-- Pit mutation-->
 			 <plugin>
