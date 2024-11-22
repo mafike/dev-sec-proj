@@ -425,10 +425,9 @@ environment {
     post {
      always {
       // Publish JUnit test results
-      // junit 'target/surefire-reports/*.xml'
+       junit 'target/surefire-reports/*.xml'
       // Record code coverage using the Coverage Plugin
-      // publishCoverage( tools: [jacocoAdapter('target/site/jacoco/jacoco.xml')] )
-      recordCoverage(tools: [[pattern: 'target/jacoco.exec'], [parser: 'JUNIT', pattern: 'target/surefire-reports/*.xml']])
+      recordCoverage(tools: [[pattern: 'target/jacoco.exec']])
       pitmutation mutationStatsFile: '**/target/pit-reports/**/mutations.xml'
       dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
       publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, reportDir: 'owasp-zap-report', reportFiles: 'zap_report.html', reportName: 'OWASP ZAP HTML Report', reportTitles: 'OWASP ZAP HTML Report'])
