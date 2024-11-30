@@ -254,7 +254,7 @@ environment {
       }
     } */
   
-   /*  stage('K8S Deployment - DEV') {
+     stage('K8S Deployment - DEV') {
     steps {
         script {
           cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
@@ -310,7 +310,7 @@ environment {
         }
         }
       }
-    } */
+    } 
 
   stage('OWASP ZAP - DAST') {
       steps {
