@@ -327,50 +327,49 @@ environment {
    }
   } 
        stage('Run CIS Benchmark') {
-            steps {
+    steps {
         script {
-          cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
-                        arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
-                    ]) {
-            // Use the kubeconfig file credential once for all parallel tasks
-            withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-                parallel(
-                    "Run Master Benchmark": {
-                        sh """
-                        chmod +x cis-master.sh
-                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-master.sh
-                        """
-                    },
-                    "Run ETCD Benchmark": {
-                        sh """
-                        chmod +x cis-etcd.sh
-                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-etcd.sh
-                        """
-                    },
-                    "Run Kubelet Benchmark": {
-                        sh """
-                        chmod +x cis-kubelet.sh
-                        KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-kubelet.sh
-                        """
-                    },
-                    "Generate HTML Report": {
-                        // Run the Python script to generate the combined HTML report
-                        sh """
-                        sleep 5  # Allow time for kube-bench to create the report
-                            chmod +x ./combine_kube_bench_json.sh
-                            ./combine_kube_bench_json.sh
-                            if [ ! -s combined-bench.json ]; then
-                                echo "{}" > combined-bench.json  # Generate an empty report if kube-bench fails
-                            fi
-                            python3 generate_kube_bench_report.py
-                        """
-                    }
-                )
+            cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
+                arbitraryFileCache(path: 'target', cacheValidityDecidingFile: 'pom.xml')
+            ]) {
+                // Use the kubeconfig file credential once for all parallel tasks
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    // Run benchmark tasks in parallel
+                    parallel(
+                        "Run Master Benchmark": {
+                            sh """
+                            chmod +x cis-master.sh
+                            KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-master.sh
+                            """
+                        },
+                        "Run ETCD Benchmark": {
+                            sh """
+                            chmod +x cis-etcd.sh
+                            KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-etcd.sh
+                            """
+                        },
+                        "Run Kubelet Benchmark": {
+                            sh """
+                            chmod +x cis-kubelet.sh
+                            KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-kubelet.sh
+                            """
+                        }
+                    )
+                    // Ensure that all benchmarks are completed before generating the report
+                    sh """
+                    chmod +x ./combine_kube_bench_json.sh
+                    ./combine_kube_bench_json.sh
+                    if [ ! -s combined-bench.json ]; then
+                        echo "{}" > combined-bench.json  # Generate an empty report if kube-bench fails
+                    fi
+                    python3 generate_kube_bench_report.py
+                    """
+                }
             }
         }
-        }
     }
-   } 
+}
+
    stage('K8S Deployment - PROD') {
     steps {
         script {
