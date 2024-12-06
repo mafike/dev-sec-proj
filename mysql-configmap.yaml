@@ -7,6 +7,6 @@ metadata:
 data:
   init.sql: |
     CREATE DATABASE IF NOT EXISTS devsecopsdb;
-    CREATE USER IF NOT EXISTS 'devuser'@'%' IDENTIFIED BY 'devpassword';
+    CREATE USER IF NOT EXISTS 'devuser'@'%' IDENTIFIED WITH mysql_native_password BY 'devpassword';
     GRANT ALL PRIVILEGES ON devsecopsdb.* TO 'devuser'@'%';
     FLUSH PRIVILEGES;
