@@ -38,8 +38,7 @@ spec:
 
       containers:
       - name: devsecops-container
-        image: num-app:latest
-        imagePullPolicy: IfNotPresent
+        image: replace
         securityContext:
           runAsNonRoot: true
           runAsUser: 100
@@ -73,3 +72,15 @@ spec:
   selector:
     app: devsecops
   type: NodePort
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce  
+  resources:
+    requests:
+      storage: 1Gi  
+  storageClassName: ""  

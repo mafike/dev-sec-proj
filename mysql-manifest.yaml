@@ -49,16 +49,29 @@ spec:
         image: busybox:1.34
         command: ['sh', '-c', 'cp /config/init.sql /init-scripts/']
         volumeMounts:
+
         - name: init-script
           mountPath: /config
         - name: init-script-volume
           mountPath: /init-scripts
+        - name: mysql-data
+          mountPath: /var/lib/mysql
       volumes:
       - name: init-script
         configMap:
           name: mysql-init-script
       - name: init-script-volume
         emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: efs-sc
+      resources:
+        requests:
+          storage: 10Gi
 
 
 ---

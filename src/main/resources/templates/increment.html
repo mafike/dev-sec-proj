@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Increment Result - DevOps Showcase</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 10px;
+        }
+
+        h1 {
+            color: #007bff;
+        }
+
+        .result {
+            font-size: 1.5em;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .highlight {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .increment-details {
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(-20px);
+            display: none;
+        }
+
+        .increment-details.visible {
+            transform: translateY(0);
+            opacity: 1;
+            display: block;
+        }
+
+        canvas {
+            margin-top: 30px;
+            max-width: 100%;
+        }
+
+        .fun-fact {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1 id="greeting">Increment Result</h1>
+        <p class="result">
+            The original value is: <span class="highlight" id="originalValue" th:text="${originalValue}"></span>
+        </p>
+        <p class="result">
+            The incremented value is: <span class="highlight" id="incrementedValue" th:text="${incrementedValue}"></span>
+        </p>
+        <div class="increment-details" id="details">
+            <p>Thank you for using our increment service! The increment operation adds 1 to the original value.</p>
+            <p>If you'd like to try another value, feel free to change the URL parameter and refresh the page!</p>
+        </div>
+        <button class="btn" onclick="toggleDetails()">View Details</button>
+        <button class="btn" onclick="adjustValue(5)">Increment by 5</button>
+        <button class="btn" onclick="adjustValue(-1)">Decrement by 1</button>
+        <canvas id="incrementChart"></canvas>
+        <div class="fun-fact" id="funFact">Loading fun fact...</div>
+        <button class="btn" onclick="goHome()">Return Home</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // JavaScript for interactivity
+        function toggleDetails() {
+            const details = document.getElementById('details');
+            if (details.classList.contains('visible')) {
+                details.classList.remove('visible');
+            } else {
+                details.classList.add('visible');
+            }
+        }
+
+        // Smooth transition when page loads
+        window.onload = function () {
+            const details = document.getElementById('details');
+            setTimeout(() => {
+                details.classList.add('visible');
+            }, 500);
+
+            displayGreeting();
+            displayFunFact();
+            drawIncrementChart();
+        };
+
+        // Dynamic greeting based on the time of day
+        function displayGreeting() {
+            const greetingElement = document.getElementById('greeting');
+            const hour = new Date().getHours();
+            let greeting = "Increment Result";
+
+            if (hour < 12) {
+                greeting = "Good Morning! Here is Your Increment Result";
+            } else if (hour < 18) {
+                greeting = "Good Afternoon! Here is Your Increment Result";
+            } else {
+                greeting = "Good Evening! Here is Your Increment Result";
+            }
+            greetingElement.innerText = greeting;
+        }
+
+        // Fun facts about numbers
+        function displayFunFact() {
+            const facts = [
+                "Did you know? The number 0 is neither positive nor negative!",
+                "99 is the highest two-digit number.",
+                "The number 1 is the only number that is neither prime nor composite.",
+                "Numbers can be powerful - Fibonacci numbers are found in nature!",
+                "The number 7 is often considered lucky in many cultures."
+            ];
+            const randomIndex = Math.floor(Math.random() * facts.length);
+            document.getElementById('funFact').innerText = facts[randomIndex];
+        }
+
+        // Adjust the value and refresh the chart
+        function adjustValue(adjustment) {
+            const originalValueElement = document.getElementById('originalValue');
+            let originalValue = parseInt(originalValueElement.textContent);
+            originalValue += adjustment;
+
+            const incrementedValueElement = document.getElementById('incrementedValue');
+            incrementedValueElement.textContent = originalValue + 1;
+
+            originalValueElement.textContent = originalValue;
+
+            drawIncrementChart();
+        }
+
+        // Draw a chart to visualize increment history
+        function drawIncrementChart() {
+            const ctx = document.getElementById('incrementChart').getContext('2d');
+            const originalValue = parseInt(document.getElementById('originalValue').textContent);
+            const incrementedValue = parseInt(document.getElementById('incrementedValue').textContent);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Original Value', 'Incremented Value'],
+                    datasets: [{
+                        label: 'Values',
+                        data: [originalValue, incrementedValue],
+                        backgroundColor: ['#007bff', '#28a745'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Function to return to the home page
+        function goHome() {
+            window.location.href = "/";
+        }
+    </script>
+
+</body>
+
+</html>
+
+
+
+
+
