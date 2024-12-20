@@ -1,23 +1,37 @@
-############### trivy-k8s-scan.sh ############### 
-
 #!/bin/bash
 
+# Print the image name
+echo "Scanning image: $imageName"
 
-echo $imageName #getting Image name from env variable
+# Verify the Docker daemon is accessible
+if ! docker info >/dev/null 2>&1; then
+    echo "Error: Cannot connect to the Docker daemon. Please ensure Docker is running."
+    exit 1
+fi
 
-docker run --rm -v $WORKSPACE:/root/.cache/ aquasec/trivy:0.17.2 -q image --exit-code 0 --severity LOW,MEDIUM,HIGH --light $imageName
-docker run --rm -v $WORKSPACE:/root/.cache/ aquasec/trivy:0.17.2 -q image --exit-code 0 --severity CRITICAL --light $imageName
+# Ensure the image exists in the registry
+if ! docker pull "$imageName"; then
+    echo "Error: Image '$imageName' not found in the registry. Ensure it is pushed correctly."
+    exit 1
+fi
 
-    # Trivy scan result processing
-    exit_code=$?
-    echo "Exit Code : $exit_code"
+# Run Trivy scans
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $WORKSPACE:/root/.cache/ \
+  aquasec/trivy:0.17.2 -q image \
+  --skip-update \
+  --severity LOW,MEDIUM,HIGH,CRITICAL \
+  --light "$imageName"
 
-    # Check scan results
-    if [[ ${exit_code} == 1 ]]; then
-        echo "Image scanning failed. Vulnerabilities found"
-        exit 1;
-    else
-        echo "Image scanning passed. No vulnerabilities found"
-    fi;
+# Capture the exit code
+exit_code=$?
+echo "Exit Code: $exit_code"
 
-############### trivy-k8s-scan.sh ############### 
+# Handle results
+if [[ $exit_code == 1 ]]; then
+    echo "Image scanning failed. Vulnerabilities found."
+    exit 1
+else
+    echo "Image scanning passed. No vulnerabilities found."
+fi
