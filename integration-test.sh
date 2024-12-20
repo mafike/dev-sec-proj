@@ -1,4 +1,3 @@
-################################## integration-test.sh ################################## 
 #!/bin/bash
 
 # integration-test.sh
@@ -7,32 +6,31 @@ sleep 5s
 
 PORT=$(kubectl -n default get svc ${serviceName} -o json | jq .spec.ports[].nodePort)
 
-echo $PORT
-echo $applicationURL:$PORT$applicationURI
+echo "Resolved Port: $PORT"
+echo "Resolved Application URL: $applicationURL"
+echo "Resolved URI: $applicationURI"
 
 if [[ ! -z "$PORT" ]]; then
 
-    # Get the full response from the /increment endpoint
     response=$(curl -s $applicationURL:$PORT$applicationURI)
     http_code=$(curl -s -o /dev/null -w "%{http_code}" $applicationURL:$PORT$applicationURI)
 
-    # Check if the response is in JSON format
-    if jq -e . >/dev/null 2>&1 <<<"$response"; then
-        echo "Response is in valid JSON format"
-        incremented_value=$(echo "$response" | jq -r '.incrementedValue')
+    # Debugging output
+    echo "Raw Response: $response"
+    echo "HTTP Code: $http_code"
 
-        if [[ "$incremented_value" == 100 ]]; then
-            echo "Increment Test Passed"
-        else
-            echo "Increment Test Failed"
-            exit 1
-        fi
+    # Extract the incremented value from the HTML response
+    incremented_value=$(echo "$response" | grep -oP '(?<=<span class="highlight" id="incrementedValue">)\d+(?=</span>)')
+
+    echo "Extracted Incremented Value: $incremented_value"
+
+    if [[ "$incremented_value" == 100 ]]; then
+        echo "Increment Test Passed"
     else
-        echo "Response is not in valid JSON format"
+        echo "Increment Test Failed"
         exit 1
     fi
 
-    # Check HTTP status code
     if [[ "$http_code" == 200 ]]; then
         echo "HTTP Status Code Test Passed"
     else
@@ -45,5 +43,3 @@ else
     exit 1
 fi
 
-
-################################## integration-test.sh ################################## 

@@ -1,27 +1,34 @@
-############### k8s-deployment-rollout-status.sh ###############
 #!/bin/bash
 
-# k8s-deployment-rollout-status.sh
+# Rollout Monitoring Script: k8s-deployment-rollout-status.sh
 
-# Increase sleep to ensure that the deployment has started properly
+set -e  # Exit immediately if a command exits with a non-zero status
+
+# Ensure required variables are set
+if [[ -z "${deploymentName}" || -z "${namespace}" ]]; then
+  echo "Error: Required environment variables (deploymentName, namespace) are not set."
+  exit 1
+fi
+
+# Initial delay to ensure deployment starts properly
 sleep 10s
 
-# Rollout status check with a longer timeout
-timeout=300s  # Allow up to 5 minutes for the rollout to complete
-echo "Checking rollout status for deployment: ${deploymentName}"
+# Rollout status check
+timeout=300s  # Timeout for rollout monitoring
+echo "Checking rollout status for deployment: ${deploymentName} in namespace: ${namespace}"
 
-rollout_status=$(kubectl -n default rollout status deploy ${deploymentName} --timeout=${timeout})
+rollout_status=$(kubectl -n "${namespace}" rollout status deployment/${deploymentName} --timeout=${timeout} || true)
 
 if [[ "$rollout_status" != *"successfully rolled out"* ]]; then
-    echo "Deployment ${deploymentName} Rollout has Failed"
-    # Provide more details on why the deployment might have failed
-    echo "Fetching details for troubleshooting:"
-    kubectl -n default describe deploy ${deploymentName}
-    kubectl -n default get pods -l app=${deploymentName} -o wide
-    echo "Undoing the failed deployment..."
-    kubectl -n default rollout undo deploy ${deploymentName}
-    exit 1
+  echo "Deployment ${deploymentName} rollout has failed."
+  echo "Fetching details for troubleshooting..."
+  kubectl -n "${namespace}" describe deployment ${deploymentName}
+  kubectl -n "${namespace}" get pods -l app=${deploymentName} -o wide
+  kubectl -n "${namespace}" logs -l app=${deploymentName} --tail=50
+  echo "Undoing the failed deployment..."
+  kubectl -n "${namespace}" rollout undo deployment/${deploymentName}
+  exit 1
 else
-    echo "Deployment ${deploymentName} Rollout is Successful"
+  echo "Deployment ${deploymentName} rollout is successful."
 fi
-############### k8s-deployment-rollout-status.sh ###############
+

@@ -1,19 +1,29 @@
-######################### update existing k8s-deployment.sh ######################### 
 #!/bin/bash
 
-#k8s-deployment.sh
+# Deployment Script: k8s-deployment.sh
 
+set -e  # Exit immediately if a command exits with a non-zero status
+
+# Ensure required variables are set
+if [[ -z "${imageName}" || -z "${deploymentName}" || -z "${containerName}" || -z "${namespace}" ]]; then
+  echo "Error: Required environment variables (imageName, deploymentName, containerName, namespace) are not set."
+  exit 1
+fi
+
+# Replace the placeholder in the deployment YAML file with the actual image name
 sed -i "s#replace#${imageName}#g" k8s_deployment_service.yaml
-# kubectl -n default get deployment ${deploymentName} > /dev/null
 
-# if [[ $? -ne 0 ]]; then
-#     echo "deployment ${deploymentName} doesnt exist"
-#     kubectl -n default apply -f k8s_deployment_service.yaml
-# else
-#     echo "deployment ${deploymentName} exist"
-#     echo "image name - ${imageName}"
-#     kubectl -n default set image deploy ${deploymentName} ${containerName}=${imageName} --record=true
-# fi
+# Check if the deployment exists
+if ! kubectl -n "${namespace}" get deployment "${deploymentName}" > /dev/null 2>&1; then
+  echo "Deployment ${deploymentName} does not exist. Creating a new deployment..."
+  kubectl -n "${namespace}" apply -f k8s_deployment_service.yaml
+else
+  echo "Deployment ${deploymentName} exists. Updating the container image..."
+  kubectl -n "${namespace}" set image deployment/${deploymentName} ${containerName}=${imageName} --record=true
+fi
+
+echo "Deployment command executed successfully."
+
 
 
 kubectl -n default apply -f k8s_deployment_service.yaml
