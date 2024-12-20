@@ -447,7 +447,7 @@ environment {
         }
     }
 
-    failure {
+     failure {
         script {
             try {
                 def failedStages = getFailedStages(currentBuild)
