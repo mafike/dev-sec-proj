@@ -5,42 +5,60 @@ metadata:
     app: devsecops
   name: devsecops
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: devsecops
+  strategy: {}
   template:
     metadata:
-      annotations:
-        vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/agent-inject-secret-db-creds: "database/creds/devsecops-role"
-        vault.hashicorp.com/role: "devsecops-role"
       labels:
         app: devsecops
     spec:
-      serviceAccountName: devsecops
+      serviceAccountName: default
+      volumes:
+      - name: vol
+        emptyDir: {}
       containers:
       - image: replace
         name: devsecops-container
         env:
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: vault-db-creds
-              key: username
         - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: vault-db-creds
-              key: password
+          value: rootpassword 
+        - name: MYSQL_DATABASE
+          value: devsecopsdb
+        - name: DB_USERNAME
+          value: root
         volumeMounts:
-        - mountPath: /data
-          name: mysql-data
+          - mountPath: /tmp
+            name: vol
         securityContext:
-          runAsNonRoot: true
+          capabilities:
+            drop:
+             - NET_RAW
           runAsUser: 100
+          runAsNonRoot: true
           readOnlyRootFilesystem: true
-      volumes:
-      - name: mysql-data
-        persistentVolumeClaim:
-          claimName: ebs-mysql-pv-claim
+          allowPrivilegeEscalation: false
+        resources:
+         requests:
+          memory: "256Mi"
+          cpu: "200m"
+         limits:
+          memory: "512Mi"
+          cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: devsecops
+  name: devsecops-svc
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: devsecops
+  type: ClusterIP
