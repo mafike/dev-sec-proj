@@ -57,14 +57,13 @@ environment {
     applicationURI = "/increment/99"
   
 }
+
   stages {
      stage('Clean Up Workspace'){
             steps{
                 cleanWs()
             }
         }
-
-  stages {
      stage('Build my Artifact') {
             steps {
               script {
