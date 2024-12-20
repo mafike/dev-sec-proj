@@ -58,6 +58,7 @@ environment {
   
 }
 
+  stages {
      stage('Build my Artifact') {
             steps {
               script {
