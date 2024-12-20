@@ -58,12 +58,6 @@ environment {
   
 }
 
-  stages {
-     stage('Clean Up Workspace'){
-            steps{
-                cleanWs()
-            }
-        }
      stage('Build my Artifact') {
             steps {
               script {
