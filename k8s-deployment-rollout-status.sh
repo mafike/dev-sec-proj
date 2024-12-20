@@ -5,8 +5,8 @@
 set -e  # Exit immediately if a command exits with a non-zero status
 
 # Ensure required variables are set
-if [[ -z "${deploymentName}" || -z "${namespace}" ]]; then
-  echo "Error: Required environment variables (deploymentName, namespace) are not set."
+if [[ -z "${deploymentName}" ]]; then
+  echo "Error: Required environment variables (deploymentName) are not set."
   exit 1
 fi
 
