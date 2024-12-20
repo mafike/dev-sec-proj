@@ -253,7 +253,7 @@ environment {
           sh "kubectl apply -f k8s_deployment_service.yaml --validate=false"
         }
       }
-    } */
+    } 
   
      stage('K8S Deployment - DEV') {
     steps {
@@ -319,14 +319,37 @@ environment {
           sh 'bash zap.sh'
         }
       }
+    } */
+  stage('Manual Approval') {
+    steps {
+        script {
+            timeout(time: 2, unit: 'DAYS') {
+                // Notify approver via email
+                mail(
+                    to: '04_bronze.squirm@icloud.com',
+                    subject: "Approval Required: ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
+                    body: """
+                    Project: ${env.JOB_NAME}
+                    Build Number: ${env.BUILD_NUMBER}
+                    
+                    Approval required for deployment to the Production Environment/Namespace.
+                    Please visit the build URL and approve the deployment request:
+                    Build URL: ${env.BUILD_URL}
+                    """,
+                    mimeType: 'text/plain'
+                )
+                
+                // Await manual approval
+                input(
+                    message: "Approve deployment of ${env.JOB_NAME} to Production?",
+                    submitter: "approver",
+                    ok: "Approve"
+                )
+            }
+        }
     }
-  stage('Prompte to PROD?') {
-  steps {
-    timeout(time: 2, unit: 'DAYS') {
-      input 'Do you want to Approve the Deployment to Production Environment/Namespace?'
-    }
-   }
-  } 
+}
+ 
        stage('Run CIS Benchmark') {
     steps {
         script {
