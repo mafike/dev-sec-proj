@@ -67,6 +67,7 @@ environment {
                     ]) {
               try{
               sh "mvn clean package -DskipTests=true"
+              sh "printenv"
               archiveArtifacts 'target/*.jar' //so tfhat they can be downloaded later
             }
             catch (e){

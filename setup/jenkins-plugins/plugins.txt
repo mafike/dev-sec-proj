@@ -2,8 +2,14 @@ performance@3.18
 docker-workflow@1.26
 dependency-check-jenkins-plugin@5.1.1
 blueocean@1.24.7
-jacoco@3.2.0
 slack@2.4.8
 sonar@2.13.1
 pitmutation@1.0-18
 kubernetes-cli@1.10.2
+coverage@1.16.1
+jobcacher@589.v10419b_45a_a_72
+docker-plugin@1.7.0
+pipeline-github-lib@61.v629f2cc41d83
+pipeline-utility-steps@2.7.1
+pipeline-stage-expectations@2.14.1
+ws-cleanup@0.48
