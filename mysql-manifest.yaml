@@ -49,29 +49,16 @@ spec:
         image: busybox:1.34
         command: ['sh', '-c', 'cp /config/init.sql /init-scripts/']
         volumeMounts:
-
         - name: init-script
           mountPath: /config
         - name: init-script-volume
           mountPath: /init-scripts
-        - name: mysql-data
-          mountPath: /var/lib/mysql
       volumes:
       - name: init-script
         configMap:
           name: mysql-init-script
       - name: init-script-volume
         emptyDir: {}
-  volumeClaimTemplates:
-  - metadata:
-      name: mysql-data
-    spec:
-      accessModes: 
-      - ReadWriteOnce
-      storageClassName: efs-sc
-      resources:
-        requests:
-          storage: 10Gi
 
 
 ---
@@ -88,3 +75,19 @@ spec:
   clusterIP: None
   selector:
     app: mysql
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-external-traffic
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}  # Internal traffic only
