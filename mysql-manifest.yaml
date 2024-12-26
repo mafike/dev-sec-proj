@@ -9,7 +9,16 @@ data:
     CREATE USER IF NOT EXISTS 'devuser'@'%' IDENTIFIED BY 'devpassword';
     GRANT ALL PRIVILEGES ON devsecopsdb.* TO 'devuser'@'%';
     FLUSH PRIVILEGES;
-
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: cm9vdHBhc3N3b3Jk # base64-encoded "rootpassword"
+  MYSQL_DATABASE: ZGV2c2Vjb3BzZGI= # base64-encoded "devsecopsdb"
+  
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -31,11 +40,9 @@ spec:
       containers:
       - name: mysql
         image: mysql:8.0
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: rootpassword # Change to a secure password
-        - name: MYSQL_DATABASE
-          value: devsecopsdb
+        envFrom:
+        - secretRef:
+            name: mysql-secret
         ports:
         - containerPort: 3306
           name: mysql
@@ -53,12 +60,43 @@ spec:
           mountPath: /config
         - name: init-script-volume
           mountPath: /init-scripts
+        - name: mysql-data
+          mountPath: /var/lib/mysql
       volumes:
       - name: init-script
         configMap:
           name: mysql-init-script
       - name: init-script-volume
         emptyDir: {}
+  affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: type
+                operator: In
+                values:
+                - "ondemand"      
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: gp2
+      resources:
+        requests:
+          storage: 10Gi
+
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: gp2
+      resources:
+        requests:
+          storage: 10Gi      
 
 
 ---

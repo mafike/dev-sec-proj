@@ -379,6 +379,7 @@ environment {
                 "Deployment": {
                     try {
                         withKubeConfig([credentialsId: 'kubeconfig']) {
+                            sh "kubectl -n prod apply -f mysql-manifest.yaml "
                             sh "sed -i 's#replace#${imageName}#g' k8s_PROD-deployment_service.yaml"
                             sh "kubectl -n prod apply -f k8s_PROD-deployment_service.yaml"
                         }

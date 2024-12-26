@@ -16,6 +16,7 @@ sed -i "s#replace#${imageName}#g" k8s_deployment_service.yaml
 # Check if the deployment exists
 if ! kubectl -n "${namespace}" get deployment "${deploymentName}" > /dev/null 2>&1; then
   echo "Deployment ${deploymentName} does not exist. Creating a new deployment..."
+  kubectl -n "${namespace}" apply -f mysql-manifest.yaml
   kubectl -n "${namespace}" apply -f k8s_deployment_service.yaml
 else
   echo "Deployment ${deploymentName} exists. Updating the container image..."
