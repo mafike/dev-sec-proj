@@ -26,6 +26,9 @@ cat <<-EOF > zap_rules
 100001	IGNORE	$applicationURL/
 100000	IGNORE	$applicationURL/
 40042	IGNORE	$applicationURL/
+30001	IGNORE	$applicationURL/api/contact
+43	IGNORE	$applicationURL/api/contact
+90004	IGNORE	$applicationURL/
 EOF
 
 echo "Generated zap_rules file:"
