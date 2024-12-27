@@ -3,7 +3,7 @@
 # Active scan rules set to IGNORE will not be run which will speed up the scan
 # Only the rule identifiers are used - the names are just for info
 # You can add your own messages to each rule by appending them after a tab on each line.
-100001	IGNORE	http://192.168.33.11:32662/
-100000	IGNORE	http://192.168.33.11:32662/
-40042	IGNORE	http://192.168.33.11:32662/
+100001	IGNORE	https://E038AF33E8F16FC87DC86B87B4C05798.gr7.us-east-1.eks.amazonaws.com/
+100000	IGNORE	https://E038AF33E8F16FC87DC86B87B4C05798.gr7.us-east-1.eks.amazonaws.com/
+40042	IGNORE	https://E038AF33E8F16FC87DC86B87B4C05798.gr7.us-east-1.eks.amazonaws.com/
 

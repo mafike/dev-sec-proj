@@ -53,7 +53,7 @@ environment {
     containerName = "devsecops-container"
     serviceName = "devsecops-svc"
     imageName = "mafike1/numeric-app:${GIT_COMMIT}"
-    applicationURL = "http://192.168.33.11"
+    applicationURL = "https://E038AF33E8F16FC87DC86B87B4C05798.gr7.us-east-1.eks.amazonaws.com"
     applicationURI = "/increment/99"
   
 }
