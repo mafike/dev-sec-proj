@@ -2,21 +2,29 @@
 
 # integration-test.sh
 
-# Wait for the Service to be provisioned
 sleep 5s
 
-# Retrieve the LoadBalancer external URL
+# Get the LoadBalancer's external IP
 EXTERNAL_IP=$(kubectl -n default get svc ${serviceName} -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
 
+# Get the LoadBalancer's port
+PORT=$(kubectl -n default get svc ${serviceName} -o json | jq -r '.spec.ports[0].port')
+
 echo "Resolved External IP: $EXTERNAL_IP"
+echo "Resolved Port: $PORT"
 echo "Resolved Application URI: $applicationURI"
 
-if [[ ! -z "$EXTERNAL_IP" && "$EXTERNAL_IP" != "null" ]]; then
+if [[ ! -z "$EXTERNAL_IP" && "$EXTERNAL_IP" != "null" && ! -z "$PORT" ]]; then
+
+    # Construct the full URL
+    FULL_URL="http://$EXTERNAL_IP:$PORT$applicationURI"
+
     # Test the application endpoint
-    response=$(curl -s http://$EXTERNAL_IP$applicationURI)
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" http://$EXTERNAL_IP$applicationURI)
+    response=$(curl -s $FULL_URL)
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" $FULL_URL)
 
     # Debugging output
+    echo "Testing URL: $FULL_URL"
     echo "Raw Response: $response"
     echo "HTTP Code: $http_code"
 
