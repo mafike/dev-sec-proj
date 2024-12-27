@@ -1,20 +1,27 @@
 #!/bin/bash
 sleep 5s
 
-# Istio Ingress Gateway Port 80 - NodePort
-PORT=$(kubectl -n istio-system get svc istio-ingressgateway -o json | jq '.spec.ports[] | select(.port == 80)' | jq .nodePort)
+# Retrieve the Istio Ingress Gateway's external IP or hostname
+EXTERNAL_IP=$(kubectl -n istio-system get svc istio-ingressgateway -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
 
+# Retrieve the port for HTTP (port 80)
+PORT=$(kubectl -n istio-system get svc istio-ingressgateway -o json | jq -r '.spec.ports[] | select(.port == 80) | .port')
+
+echo "Resolved External IP: $EXTERNAL_IP"
 echo "Resolved Port: $PORT"
-echo "Resolved Application URL: $applicationURL"
-echo "Resolved URI: $applicationURI"
+echo "Resolved Application URI: $applicationURI"
 
-if [[ ! -z "$PORT" ]]; then
+if [[ ! -z "$EXTERNAL_IP" && "$EXTERNAL_IP" != "null" && ! -z "$PORT" ]]; then
+
+    # Construct the full URL
+    FULL_URL="http://$EXTERNAL_IP:$PORT$applicationURI"
 
     # Get the full response from the /increment endpoint
-    response=$(curl -s $applicationURL:$PORT$applicationURI)
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" $applicationURL:$PORT$applicationURI)
+    response=$(curl -s $FULL_URL)
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" $FULL_URL)
 
     # Debugging output
+    echo "Testing URL: $FULL_URL"
     echo "Raw Response: $response"
     echo "HTTP Code: $http_code"
 
@@ -23,6 +30,7 @@ if [[ ! -z "$PORT" ]]; then
 
     echo "Extracted Incremented Value: $incremented_value"
 
+    # Validate the extracted value
     if [[ "$incremented_value" == 100 ]]; then
         echo "Increment Test Passed"
     else
@@ -30,14 +38,15 @@ if [[ ! -z "$PORT" ]]; then
         exit 1
     fi
 
+    # Validate the HTTP status code
     if [[ "$http_code" == 200 ]]; then
         echo "HTTP Status Code Test Passed"
     else
-        echo "HTTP Status code is not 200"
+        echo "HTTP Status Code Test Failed"
         exit 1
     fi
 
 else
-    echo "The Service does not have a NodePort"
+    echo "The Istio Ingress Gateway does not have an External IP or is not ready"
     exit 1
 fi
