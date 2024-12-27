@@ -68,15 +68,15 @@ spec:
           name: mysql-init-script
       - name: init-script-volume
         emptyDir: {}
-  affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: type
-                operator: In
-                values:
-                - "ondemand"      
+      affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: type
+                    operator: In
+                    values:
+                    - "ondemand"      
   volumeClaimTemplates:
   - metadata:
       name: mysql-data
@@ -87,16 +87,7 @@ spec:
       resources:
         requests:
           storage: 10Gi
-
-  - metadata:
-      name: mysql-data
-    spec:
-      accessModes: 
-      - ReadWriteOnce
-      storageClassName: gp2
-      resources:
-        requests:
-          storage: 10Gi      
+   
 
 
 ---
