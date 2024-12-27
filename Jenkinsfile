@@ -133,7 +133,7 @@ environment {
       }
       }
        } 
-      } */
+      } 
 
      stage('Vulnerability Scan - Docker') {
     steps {
@@ -176,7 +176,7 @@ environment {
         }
         }
     }
-}
+} */
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
