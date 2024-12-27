@@ -21,16 +21,15 @@ echo "Resolved Port: $PORT"
 # Construct the application URL
 applicationURL="http://$EXTERNAL_IP"
 
-# Dynamically generate zap_rules file
-cat <<EOF > zap_rules
-# Dynamically Generated ZAP Rules
-100001 IGNORE $applicationURL/
-100000 IGNORE $applicationURL/
-40042 IGNORE $applicationURL/
+# Dynamically generate zap_rules file with tabs
+cat <<-EOF > zap_rules
+100001	IGNORE	$applicationURL/
+100000	IGNORE	$applicationURL/
+40042	IGNORE	$applicationURL/
 EOF
 
 echo "Generated zap_rules file:"
-cat zap_rules
+cat zap_rules | cat -A  # Display special characters for debugging
 
 # Set permissions for the current directory
 chmod 777 $(pwd)
@@ -41,9 +40,9 @@ docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-weekly zap-api-scan.py -t $appl
 
 exit_code=$?
 
-# Move the HTML report to a dedicated directory
-sudo mkdir -p owasp-zap-report
-sudo mv zap_report.html owasp-zap-report
+# Move the HTML report to a dedicated directory without sudo
+mkdir -p owasp-zap-report
+mv zap_report.html owasp-zap-report
 
 echo "Exit Code : $exit_code"
 
