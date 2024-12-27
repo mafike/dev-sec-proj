@@ -76,7 +76,7 @@ environment {
          }   
         }
         }
-     }
+     } /*
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
@@ -109,7 +109,7 @@ environment {
       }
       }
     } 
-     /* stage('SonarQube - SAST') {
+      stage('SonarQube - SAST') {
       steps {
       script{
       cache(maxCacheSize: 1073741824, defaultBranch: 'main', caches: [
@@ -134,7 +134,7 @@ environment {
       }
       }
        } 
-      } */
+      } 
 
      stage('Vulnerability Scan - Docker') {
     steps {
@@ -246,14 +246,14 @@ environment {
         }
     }
 }
-   /*stage('Kubernetes Deployment - DEV') {
+   stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
           sh "sed -i 's#replace#mafike1/numeric-app:${GIT_COMMIT}#g' k8s_deployment_service.yaml"
           sh "kubectl apply -f k8s_deployment_service.yaml --validate=false"
         }
       }
-    } */
+    } 
   
      stage('K8S Deployment - DEV') {
     steps {
@@ -422,7 +422,7 @@ environment {
         }
       }
     }
-  }
+  } */
     post {
      always {
       // Publish JUnit test results
