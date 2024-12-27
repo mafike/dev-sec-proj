@@ -134,8 +134,8 @@ environment {
       }
       }
        } 
-      } 
-
+      } */
+     /*
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
@@ -245,7 +245,7 @@ environment {
         }
         }
     }
-}
+} 
    stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
@@ -253,7 +253,7 @@ environment {
           sh "kubectl apply -f k8s_deployment_service.yaml --validate=false"
         }
       }
-    } 
+    } */
   
      stage('K8S Deployment - DEV') {
     steps {
@@ -422,7 +422,7 @@ environment {
         }
       }
     }
-  } */
+  }
     post {
      always {
       // Publish JUnit test results
