@@ -2,18 +2,19 @@
 
 # integration-test.sh
 
+# Wait for the Service to be provisioned
 sleep 5s
 
-PORT=$(kubectl -n default get svc ${serviceName} -o json | jq .spec.ports[].nodePort)
+# Retrieve the LoadBalancer external URL
+EXTERNAL_IP=$(kubectl -n default get svc ${serviceName} -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
 
-echo "Resolved Port: $PORT"
-echo "Resolved Application URL: $applicationURL"
-echo "Resolved URI: $applicationURI"
+echo "Resolved External IP: $EXTERNAL_IP"
+echo "Resolved Application URI: $applicationURI"
 
-if [[ ! -z "$PORT" ]]; then
-
-    response=$(curl -s $applicationURL:$PORT$applicationURI)
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" $applicationURL:$PORT$applicationURI)
+if [[ ! -z "$EXTERNAL_IP" && "$EXTERNAL_IP" != "null" ]]; then
+    # Test the application endpoint
+    response=$(curl -s http://$EXTERNAL_IP$applicationURI)
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" http://$EXTERNAL_IP$applicationURI)
 
     # Debugging output
     echo "Raw Response: $response"
@@ -24,6 +25,7 @@ if [[ ! -z "$PORT" ]]; then
 
     echo "Extracted Incremented Value: $incremented_value"
 
+    # Validate the extracted value
     if [[ "$incremented_value" == 100 ]]; then
         echo "Increment Test Passed"
     else
@@ -31,15 +33,16 @@ if [[ ! -z "$PORT" ]]; then
         exit 1
     fi
 
+    # Validate the HTTP status code
     if [[ "$http_code" == 200 ]]; then
         echo "HTTP Status Code Test Passed"
     else
-        echo "HTTP Status code is not 200"
+        echo "HTTP Status Code Test Failed"
         exit 1
     fi
 
 else
-    echo "The Service does not have a NodePort"
+    echo "The Service does not have an External IP or LoadBalancer is not ready"
     exit 1
 fi
 

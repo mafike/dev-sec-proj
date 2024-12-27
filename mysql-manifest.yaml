@@ -60,8 +60,6 @@ spec:
           mountPath: /config
         - name: init-script-volume
           mountPath: /init-scripts
-        - name: mysql-data
-          mountPath: /var/lib/mysql
       volumes:
       - name: init-script
         configMap:
@@ -77,16 +75,7 @@ spec:
                     operator: In
                     values:
                     - "ondemand"      
-  volumeClaimTemplates:
-  - metadata:
-      name: mysql-data
-    spec:
-      accessModes: 
-      - ReadWriteOnce
-      storageClassName: gp2
-      resources:
-        requests:
-          storage: 10Gi
+
    
 
 
