@@ -75,7 +75,7 @@ environment {
          }   
         }
         }
-     } /*
+     } 
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
@@ -107,7 +107,7 @@ environment {
       }
       }
       }
-    } 
+    } /*
       stage('SonarQube - SAST') {
       steps {
       script{
@@ -134,7 +134,7 @@ environment {
       }
        } 
       } 
-
+*/
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
@@ -176,7 +176,7 @@ environment {
         }
         }
     }
-} */
+} 
         stage('Docker Build and Push') {
             steps {
                 // Use withCredentials to access Docker credentials
@@ -202,7 +202,7 @@ environment {
             }
                 }
         }  
-      } /*
+      } 
     stage('Vulnerability Scan - Kubernetes') {
     steps {
         script {
@@ -244,7 +244,7 @@ environment {
         }
         }
     }
-} */
+} 
    /*stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
@@ -253,7 +253,7 @@ environment {
         }
       }
     } */
-  /*
+  
      stage('K8S Deployment - DEV') {
     steps {
         script {
@@ -325,7 +325,7 @@ environment {
       input 'Do you want to Approve the Deployment to Production Environment/Namespace?'
     }
    }
-  } */
+  } 
        stage('Run CIS Benchmark') {
     steps {
         script {
