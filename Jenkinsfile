@@ -245,6 +245,18 @@ environment {
         }
     }
 } 
+stage('Scale Up Spot Node Group') {
+            steps {
+                script {
+                    sh '''
+                    aws eks update-nodegroup-config \
+                        --cluster-name ${CLUSTER_NAME} \
+                        --nodegroup-name ${CLUSTER_NAME}-spot-nodes \
+                        --scaling-config minSize=1,maxSize=10,desiredSize=3
+                    '''
+                }
+            }
+        } 
    /*stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
@@ -326,6 +338,19 @@ environment {
     }
    }
   } 
+  stage('Scaling Down Spot Node Group') {
+            steps {
+                script {
+                    sh '''
+                    kubectl -n default delete deploy devsecops
+                    aws eks update-nodegroup-config \
+                        --cluster-name ${CLUSTER_NAME} \
+                        --nodegroup-name ${CLUSTER_NAME}-spot-nodes \
+                        --scaling-config minSize=0,maxSize=10,desiredSize=0
+                    '''
+                }
+            }
+        }
        stage('Run CIS Benchmark') {
     steps {
         script {
