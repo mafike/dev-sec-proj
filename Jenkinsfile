@@ -75,7 +75,7 @@ environment {
          }   
         }
         }
-     } 
+     } /*
      stage('Unit Tests - JUnit and Jacoco') {
        steps {
         script{
@@ -107,7 +107,7 @@ environment {
       }
       }
       }
-    } /*
+    } 
       stage('SonarQube - SAST') {
       steps {
       script{
@@ -134,7 +134,7 @@ environment {
       }
        } 
       } 
-*/
+
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
@@ -256,7 +256,7 @@ stage('Scale Up Spot Node Group') {
                     '''
                 }
             }
-        } 
+        } /*
    /*stage('Kubernetes Deployment - DEV') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {

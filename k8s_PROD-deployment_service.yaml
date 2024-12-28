@@ -62,3 +62,59 @@ spec:
   selector:
     app: devsecops
   type: ClusterIP
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: devsecops-gateway
+  namespace: prod
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: devsecops-numeric
+  namespace: prod
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - devsecops-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/contact
+    - uri:
+        prefix: /increment
+    - uri:
+        exact: /
+    route:
+    - destination:
+        host: devsecops-svc
+        port:
+          number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-istio-ingress
+  namespace: prod
+spec:
+  podSelector:
+    matchLabels:
+      app: devsecops
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          istio: ingressgateway
