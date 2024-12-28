@@ -54,7 +54,7 @@ environment {
     serviceName = "devsecops-svc"
     imageName = "mafike1/numeric-app:${GIT_COMMIT}"
     applicationURI = "/increment/99"
-    CLUSTER_NAME = dev-medium-eks-cluster
+    CLUSTER_NAME = "dev-medium-eks-cluster"
   
 }
 
