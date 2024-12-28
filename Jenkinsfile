@@ -245,7 +245,7 @@ environment {
         }
         }
     }
-} 
+} /*
 stage('Scale Up Spot Node Group') {
             steps {
                 script {
