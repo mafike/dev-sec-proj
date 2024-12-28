@@ -54,6 +54,7 @@ environment {
     serviceName = "devsecops-svc"
     imageName = "mafike1/numeric-app:${GIT_COMMIT}"
     applicationURI = "/increment/99"
+    CLUSTER_NAME = dev-medium-eks-cluster
   
 }
 
@@ -343,14 +344,10 @@ stage('Scale Up Spot Node Group') {
                 script {
                     sh '''
                     kubectl -n default delete deploy devsecops
-                    aws eks update-nodegroup-config \
-                        --cluster-name ${CLUSTER_NAME} \
-                        --nodegroup-name ${CLUSTER_NAME}-spot-nodes \
-                        --scaling-config minSize=0,maxSize=10,desiredSize=0
                     '''
                 }
             }
-        }
+        } 
        stage('Run CIS Benchmark') {
     steps {
         script {
