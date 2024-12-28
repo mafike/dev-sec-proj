@@ -136,6 +136,7 @@ environment {
        } 
       } 
    */
+
      stage('Vulnerability Scan - Docker') {
     steps {
         script {
@@ -339,15 +340,6 @@ stage('Scale Up Spot Node Group') {
     }
    }
   } 
-  stage('Scaling Down Spot Node Group') {
-            steps {
-                script {
-                    sh '''
-                    kubectl -n default delete deploy devsecops
-                    '''
-                }
-            }
-        } 
        stage('Run CIS Benchmark') {
     steps {
         script {
