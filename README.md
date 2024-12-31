@@ -1,91 +1,136 @@
-Numeric-App
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numeric-App</title>
+</head>
+<body>
+    <h1>Numeric-App</h1>
+    <p>
+        Welcome to <strong>Numeric-App</strong>, a DevOps-focused project showcasing advanced infrastructure automation, CI/CD pipelines, Kubernetes deployments, microservices communication, and security integration. This repository highlights professional-grade workflows for deploying and managing containerized applications in production-like environments.
+    </p>
 
-Welcome to Numeric-App, a DevOps-focused project showcasing advanced infrastructure automation, CI/CD pipelines, Kubernetes deployments, microservices communication, and security integration. This repository highlights professional-grade workflows for deploying and managing containerized applications in production-like environments.
+    <h2>About the Project</h2>
+    <p>
+        <strong>Numeric-App</strong> consists of a <em>microservice architecture</em> that includes:
+        <ol>
+            <li><strong>Java Microservice</strong>: The primary application built using Java.</li>
+            <li><strong>Node.js Microservice</strong>: A secondary service required for the Java app to function properly.</li>
+        </ol>
+    </p>
+    <p>The project demonstrates:</p>
+    <ul>
+        <li><strong>Infrastructure Automation:</strong> Terraform for scalable infrastructure provisioning.</li>
+        <li><strong>CI/CD Pipelines:</strong> Automated pipelines built with Jenkins.</li>
+        <li><strong>Microservice Communication:</strong> Kubernetes and Docker setup to establish communication between services.</li>
+        <li><strong>Security Integration:</strong> Automated compliance checks with tools like Trivy, Kube-Bench, and OPA.</li>
+    </ul>
+    <div style="border: 1px solid #ddd; padding: 15px; background: #f9f9f9;">
+        <strong>Important:</strong> Before running the Java application pipeline, ensure the Node.js microservice is running. The Java app depends on the Node.js service for its functionality.
+    </div>
 
-About the Project
+    <h2>Microservice Setup</h2>
+    <h3>Node.js Microservice</h3>
+    <p>The Node.js microservice can be run in two ways: using Docker or deploying it to Kubernetes.</p>
 
-Numeric-App consists of a microservice architecture that includes:
+    <h4>Docker Setup</h4>
+    <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
+        <pre><code>docker run -p 8787:5000 mafike1/node-app:latest</code></pre>
+    </div>
+    <p>Verify the service is running by executing:</p>
+    <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
+        <pre><code>curl localhost:8787/plusone/99</code></pre>
+    </div>
 
-Java Microservice: The primary application built using Java.
-Node.js Microservice: A secondary service required for the Java app to function properly.
-The project demonstrates:
+    <h4>Kubernetes Deployment</h4>
+    <p>To deploy the Node.js microservice in Kubernetes:</p>
+    <ol>
+        <li>Create a deployment:
+            <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
+                <pre><code>kubectl create deploy node-app --image mafike1/node-app:latest</code></pre>
+            </div>
+        </li>
+        <li>Expose the service within the cluster:
+            <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
+                <pre><code>kubectl expose deploy node-app --name node-service --port 5000 --type ClusterIP</code></pre>
+            </div>
+        </li>
+        <li>Verify the service is running:
+            <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
+                <pre><code>kubectl get svc node-service
+curl &lt;node-service-ip&gt;:5000/plusone/99</code></pre>
+            </div>
+        </li>
+    </ol>
 
-Infrastructure Automation: Terraform for scalable infrastructure provisioning.
-CI/CD Pipelines: Automated pipelines built with Jenkins.
-Microservice Communication: Kubernetes and Docker setup to establish communication between services.
-Security Integration: Automated compliance checks with tools like Trivy, Kube-Bench, and OPA.
-Important Note: Before running the Java application pipeline, ensure the Node.js microservice is running. The Java app depends on the Node.js service for its functionality.
+    <h2>Jenkins Integration: Slack Notifications</h2>
+    <p>The Jenkins pipeline in this project includes Slack notifications to keep you updated on pipeline status. Follow these steps to enable Slack integration:</p>
+    <h3>1. Slack Setup</h3>
+    <ul>
+        <li><strong>Workspace and Channel:</strong> Create a Slack workspace and a dedicated channel (e.g., #jenkins-alerts).</li>
+        <li><strong>Bot Setup:</strong>
+            <ol>
+                <li>Visit the <a href="https://api.slack.com/apps" target="_blank">Slack API</a> and create a new app.</li>
+                <li>Assign permissions under <strong>OAuth & Permissions</strong>:
+                    <ul>
+                        <li>chat:write</li>
+                        <li>channels:read</li>
+                        <li>groups:read</li>
+                        <li>channels:join</li>
+                    </ul>
+                </li>
+                <li>Add the bot to your Slack channel and note the <strong>Bot User OAuth Token</strong>.</li>
+            </ol>
+        </li>
+    </ul>
+    <h3>2. Jenkins Configuration</h3>
+    <ul>
+        <li><strong>Global Slack Notifier:</strong> Use the token and workspace/channel details.</li>
+        <li><strong>Shared Library:</strong> Add the shared library named <code>slack</code> in <strong>Global Pipeline Libraries</strong>.</li>
+    </ul>
 
-Microservice Setup
+    <h2>Jenkinsfile: Environment Variables</h2>
+    <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
+        <pre><code>@Library('slack') _
+pipeline {
+  agent any
 
-Node.js Microservice
-The Node.js microservice can be run in two ways: using Docker or deploying it to Kubernetes.
+  environment {
+    // Kubernetes Deployment Variables
+    KUBE_BENCH_SCRIPT = "cis-master.sh"
+    deploymentName = "devsecops"
+    containerName = "devsecops-container"
+    serviceName = "devsecops-svc"
+    imageName = "mafike1/numeric-app:${GIT_COMMIT}"
+    applicationURI = "/increment/99"
+    CLUSTER_NAME = "dev-medium-eks-cluster"
 
-Docker Setup
+    // Slack Notification Variables
+    SLACK_CHANNEL = "#jenkins-alerts"
+    SLACK_CREDENTIAL_ID = "slack-credentials-id"
+  }
+}</code></pre>
+    </div>
+    <h3>Precautions:</h3>
+    <ul>
+        <li>Replace <code>slack-credentials-id</code> with your Jenkins Slack token credentials.</li>
+        <li>Modify the <code>imageName</code> and <code>CLUSTER_NAME</code> if necessary to match your environment.</li>
+    </ul>
 
-To run the Node.js microservice locally using Docker:
+    <h2>Contribution Guidelines</h2>
+    <p>Contributions are welcome! Here’s how you can get involved:</p>
+    <ul>
+        <li><strong>Raise Issues:</strong> Found a bug or have a suggestion? <a href="https://github.com/mafike/dev-sec-proj/issues/new" target="_blank">Open an issue</a>.</li>
+        <li><strong>Submit Pull Requests:</strong> Fork the repository, create a branch for your feature, and submit a PR.</li>
+        <li><strong>Collaborate:</strong> Contact me for deeper discussions or to propose larger contributions.</li>
+    </ul>
 
-docker run -p 8787:5000 mafike1/node-app:latest
-Verify the service is running by executing:
+    <h2>Blog Post</h2>
+    <p>For a detailed explanation of the project, its architecture, and strategies employed, refer to the blog post: <a href="https://mafike.com/projects/" target="_blank">Numeric App Project Overview</a>.</p>
 
-curl localhost:8787/plusone/99
-You should see the expected response from the microservice.
+    <h2>Contact</h2>
+    <p>If you'd like to contribute, collaborate, or learn more, don’t hesitate to reach out via email or GitHub Issues.</p>
+</body>
+</html>
 
-Kubernetes Deployment
-
-To deploy the Node.js microservice in Kubernetes:
-
-Create a deployment:
-kubectl create deploy node-app --image mafike1/node-app:latest
-Expose the service within the cluster:
-kubectl expose deploy node-app --name node-service --port 5000 --type ClusterIP
-Verify the service is running by obtaining the service IP and querying the endpoint:
-# Get the service IP
-kubectl get svc node-service
-
-# Replace <node-service-ip> with the ClusterIP from the above command
-curl <node-service-ip>:5000/plusone/99
-Java Application
-Once the Node.js microservice is running, the Java application can be deployed. This repository includes the pipeline for building and deploying the Java microservice.
-
-The pipeline builds the Java app using Maven, creates a Docker image, and deploys it to Kubernetes.
-The Java app will communicate with the Node.js microservice to provide its functionality.
-Repository Structure
-
-src/: Java microservice source code.
-k8s-deployment/: Kubernetes manifests for Java and Node.js deployments.
-security-scripts/: Security and compliance scanning scripts.
-terraform/: Infrastructure provisioning with Terraform.
-integration-tests/: Integration and rollout testing scripts.
-Jenkinsfile: CI/CD pipeline configuration for the Java microservice.
-Dockerfile: Docker image build configuration for the Java microservice.
-Getting Started
-
-Clone the repository:
-git clone https://github.com/yourusername/numeric-app.git
-cd numeric-app
-Ensure the Node.js microservice is running (see instructions above).
-Run the pipeline to build and deploy the Java application using the provided Jenkinsfile.
-Contribution Guidelines
-
-Contributions are welcome! Here’s how you can get involved:
-
-Raise Issues: Found a bug or have a suggestion? Open an issue.
-Submit Pull Requests: Fork the repository, create a branch for your feature, and submit a PR.
-Collaborate: Contact me for deeper discussions or to propose larger contributions.
-For inquiries, feedback, or collaboration opportunities, feel free to send a message.
-
-Future Enhancements
-
-Full integration of Helm for optimized Kubernetes deployment.
-Istio service mesh for advanced traffic management (e.g., circuit breaking, fault injection).
-Enhanced monitoring with Prometheus and Grafana.
-Additional security integrations with Falco and policy enforcement tools.
-Blog Post
-
-For a detailed explanation of this project, its architecture, and the strategies employed, refer to the blog post:
-Numeric App Project Overview
-
-Contact
-
-If you'd like to contribute, collaborate, or learn more, don’t hesitate to reach out via email or GitHub Issues.
