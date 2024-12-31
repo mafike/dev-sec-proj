@@ -3,11 +3,12 @@
 <p>
   Welcome to <strong>Numeric-App</strong>, a DevOps-focused project showcasing advanced infrastructure automation, CI/CD pipelines, Kubernetes deployments, microservices communication, and security integration. This repository highlights professional-grade workflows for deploying and managing containerized applications in production-like environments.
 </p>
-![Alt text](./slack-emojis/ms.png)
-![Alt text](./slack-emojis/aws.png)
-![Alt text](./slack-emojis/k8.png)
-![Alt text](./slack-emojis/kiali.png)
-
+<div style="text-align: center; margin: 20px 0;">
+  <img src="./slack-emojis/ms.png" alt="Microservice" style="width:100px; margin-right: 10px;">
+  <img src="./slack-emojis/aws.png" alt="AWS" style="width:100px; margin-right: 10px;">
+  <img src="./slack-emojis/k8.png" alt="Kubernetes" style="width:100px; margin-right: 10px;">
+  <img src="./slack-emojis/kiali.png" alt="Kiali" style="width:100px;">
+</div>
 <h2>About the Project</h2>
 <p>
   <strong>Numeric-App</strong> consists of a <em>microservice architecture</em> that includes:
