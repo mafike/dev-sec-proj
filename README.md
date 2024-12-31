@@ -78,13 +78,188 @@ curl &lt;node-service-ip&gt;:5000/plusone/99
 <h2>Repository Structure</h2>
 <ul>
   <li><code>src/</code>: Java microservice source code.</li>
-  <li><code>k8s-deployment/</code>: Kubernetes manifests for Java and Node.js deployments.</li>
-  <li><code>security-scripts/</code>: Security and compliance scanning scripts.</li>
-  <li><code>terraform/</code>: Infrastructure provisioning with Terraform.</li>
-  <li><code>integration-tests/</code>: Integration and rollout testing scripts.</li>
+  <li><code>efk/</code>: create kubernetes eks stack</li>
+  <li><code>generate_kube_bench_report.py/</code>: python json parser script to convert kubench report into proper formatting.</li>
+  <li><code>k8s-deployment-service/</code>: Kubernetes manifests for java app deployments for dev environment.</li>
+   <li><code>k8s_PROD-deployment-service/</code>: Kubernetes manifests for java app deployments for prod environment.</li>
+  <li><code>terraform-setup/</code>: AWS Infrastructure provisioning with Terraform for both eks and jenkins. Please run this commands to create the aws vpc first if intended to have jenkins server running before eks since the jenkins configuration depends on the eks state;
+  <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
+      <pre><code>
+      terraform apply -var-file=dev.tfvars -target= module.eks.aws_subnet.public-subnet
+      terraform apply -var-file=dev.tfvars -target=module.eks.aws_subnet.public-subnet
+      terraform plan -var-file=dev.tfvars
+      terraform apply -var-file=dev.tfvars -target=module.eks.aws_subnet.private-subnet
+      terraform apply -var-file=dev.tfvars -target=module.eks.aws_route_table_association.name
+    </code></pre>
+  </div>
+  </li>
+  <li><code>jenkins-plugins</code>: Automatic jenkins plugins installation for this project. </li>
+  <li><code>integration-test.sh/</code>: Integration and rollout testing scripts for jenkins DEV/STAGING stage.</li>
+  <li><code>integration-test-PROD.sh/</code>: Integration and rollout testing scripts for jenkins production stage.</li>
   <li><code>Jenkinsfile</code>: CI/CD pipeline configuration for the Java microservice.</li>
   <li><code>Dockerfile</code>: Docker image build configuration for the Java microservice.</li>
 </ul>
+<h2>Prerequisites</h2>
+<p>
+  Follow these steps to set up the environment in your Kubernetes cluster before deploying the application.
+</p>
+
+<h3>1. Install Istio and Add-ons</h3>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>
+  curl -L https://istio.io/downloadIstio | sh -
+  cd istio-1.24.2
+  export PATH=$PWD/bin:$PATH
+  istioctl install --set profile=demo -y && kubectl apply -f samples/addons
+  </code></pre>
+</div>
+
+<h3>2. Deploy Vault</h3>
+<p><strong>Step 1:</strong> Create a Namespace for Vault</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>kubectl create ns vault</code></pre>
+</div>
+
+<p><strong>Step 2:</strong> Install Vault Using Helm</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>helm install vault hashicorp/vault --namespace vault \
+    --set "injector.enabled=true" \
+    --set "injector.agentSidecarImagePullPolicy=Always"</code></pre>
+</div>
+
+<p><strong>Step 3:</strong> Initialize and Unseal Vault</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>kubectl exec vault-0 -n vault -- vault operator init -key-shares=1 -key-threshold=1 -format=json > init-keys.json
+VAULT_UNSEAL_KEY=$(cat init-keys.json | jq -r ".unseal_keys_b64[]")
+kubectl exec vault-0 -n vault -- vault operator unseal $VAULT_UNSEAL_KEY
+VAULT_ROOT_TOKEN=$(cat init-keys.json | jq -r ".root_token")
+kubectl exec vault-0 -n vault -- vault login $VAULT_ROOT_TOKEN</code></pre>
+</div>
+
+<p><strong>Step 4:</strong> Enable and Configure Database Secrets</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>vault secrets enable database
+vault write database/config/mysql \
+    plugin_name=mysql-database-plugin \
+    connection_url="{{username}}:{{password}}@tcp(mysql-service.default.svc.cluster.local:3306)/" \
+    allowed_roles="devsecops-role" \
+    username="root" \
+    password="rootpassword"
+vault write database/roles/devsecops-role \
+    db_name=mysql \
+    creation_statements="CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}'; GRANT ALL PRIVILEGES ON mysql.* TO '{{name}}'@'%';" \
+    default_ttl="1h" \
+    max_ttl="24h"</code></pre>
+</div>
+
+<h3>3. Configure PKI in Vault</h3>
+<p><strong>Step 1:</strong> Enable PKI and Generate Certificates</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>vault secrets enable pki
+vault secrets tune -max-lease-ttl=8760h pki
+vault write pki/root/generate/internal \
+    common_name=mydevsecopapp.com \
+    ttl=8760h</code></pre>
+</div>
+
+<p><strong>Step 2:</strong> Configure Certificate Issuing URLs</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>vault write pki/config/urls \
+    issuing_certificates="http://vault.vault.svc.cluster.local:8200/v1/pki/ca" \
+    crl_distribution_points="http://vault.vault.svc.cluster.local:8200/v1/pki/crl"</code></pre>
+</div>
+<h3>4. Install Cert-Manager</h3>
+<p><strong>Step 1:</strong> Install CRDs</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.12.3/cert-manager.crds.yaml</code></pre>
+</div>
+
+<p><strong>Step 2:</strong> Install Cert-Manager Using Helm</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>helm install cert-manager --namespace cert-manager --version v1.12.3 jetstack/cert-manager</code></pre>
+</div>
+
+<h3>4. Configure Vault-Issuer and Certificates</h3>
+<p><strong>Step 1:</strong> Create Service Account and Secret</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>kubectl create serviceaccount issuer -n istio-system
+cat > issuer-secret.yaml <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: istio-system
+  name: issuer-token-lmzpj
+  annotations:
+    kubernetes.io/service-account.name: issuer
+type: kubernetes.io/service-account-token
+EOF
+kubectl apply -f issuer-secret.yaml</code></pre>
+</div>
+
+<p><strong>Step 2:</strong> Create and Apply Vault Issuer</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>cat > vault-issuer.yaml <<EOF
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  namespace: istio-system
+  name: vault-issuer
+spec:
+  vault:
+    server: http://vault.vault.svc:8200
+    path: pki/sign/mydev
+    auth:
+      kubernetes:
+        mountPath: /v1/auth/kubernetes
+        role: devsecops-role
+        secretRef:
+          name: issuer-token-lmzpj
+          key: token
+EOF
+kubectl apply --filename vault-issuer.yaml</code></pre>
+</div>
+
+<p><strong>Step 3:</strong> Create Certificate</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>cat > devsecops-cert.yaml <<EOF
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  namespace: istio-system
+  name: mydevsecopapp.com
+spec:
+  secretName: devsecops
+  issuerRef:
+    name: vault-issuer
+  commonName: www.mydevsecopapp.com
+  dnsNames:
+  - www.mydevsecopapp.com
+EOF
+kubectl apply --filename devsecops-cert.yaml</code></pre>
+</div>
+
+<p><strong>Step 4:</strong> Verify Certificate</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>kubectl describe certificate.cert-manager mydevsecopapp.com -n istio-system</code></pre>
+</div>
+<h3>5. Install Falco for Runtime Security</h3>
+<p><strong>Step 1:</strong> Install Helm (if not installed)</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>export VERIFY_CHECKSUM=false
+curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+helm version</code></pre>
+</div>
+
+<p><strong>Step 2:</strong> Install Falco Using Helm</p>
+<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+  <pre><code>helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm install --replace falco --namespace falco --create-namespace falcosecurity/falco \
+    --set falcosidekick.enabled=true \
+    --set falcosidekick.webui.enabled=true \
+    --set falcosidekick.config.slack.webhookurl="<YOUR_SLACK_WEBHOOK_URL>" \
+    --set falcosidekick.config.customfields="environment:production, datacenter:us-east-2"</code></pre>
+</div>
+
 Jenkins Integration: Slack Notifications
 
 The Jenkins pipeline in this project includes Slack notifications to keep you updated on pipeline status. Follow these steps to enable Slack integration:
