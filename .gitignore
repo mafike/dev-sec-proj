@@ -27,4 +27,8 @@ hs_err_pid*
 bin
 .classpath
 .project
-target
+target/*
+.terraform
+.terraform*
+terraform.tfstate
+terraform.tfstate.backup

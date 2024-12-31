@@ -1,0 +1,30 @@
+/*provider "aws" {
+  region = var.aws_region
+}
+
+
+# Launch Jenkins server instance
+resource "aws_instance" "jenkins" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.instance_type
+  subnet_id                   = module.vpc.public_subnets[0]
+  associate_public_ip_address = true
+  security_groups        = [aws_security_group.jenkins.id]
+  key_name                    = aws_key_pair.generated.key_name
+  user_data = file("userdata.sh")
+  tags = {
+    Name  = "Jenkins-Server"
+    App   = "Jenkins"
+  }
+
+}
+*/
+
+
+
+
+
+/*
+output "jenkins_endpoint" {
+  value = formatlist("http://%s:%s/", aws_instance.Jenkins.*.public_ip, "8090")
+} */

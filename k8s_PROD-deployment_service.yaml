@@ -5,41 +5,55 @@ metadata:
     app: devsecops
   name: devsecops
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: devsecops
-  strategy: {}
   template:
     metadata:
+      annotations:
+        vault.hashicorp.com/agent-init-first: "true"
+        traffic.sidecar.istio.io/excludeInboundPorts: "8200"
+        traffic.sidecar.istio.io/excludeOutboundIPRanges: "10.108.127.59/32"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/tls-skip-verify: "true"
+        vault.hashicorp.com/role: "devsecops-role"
+        vault.hashicorp.com/agent-inject-secret-db-credentials: "database/creds/devsecops-role"
+        vault.hashicorp.com/agent-inject-template-db-credentials: |
+          {{- with secret "database/creds/devsecops-role" -}}
+          export DB_USERNAME={{ .Data.username }}
+          export DB_PASSWORD={{ .Data.password }}
+          {{- end }}
       labels:
         app: devsecops
     spec:
-      serviceAccountName: default
-      volumes:
-      - name: vol
-        emptyDir: {}
+      serviceAccountName: issuer
+      initContainers:
+      - name: db-check
+        image: busybox:1.34
+        command:
+        - sh
+        - -c
+        - |
+          until nc -zv mysql-service 3306; do
+            echo "Waiting for database to be ready...";
+            sleep 2;
+          done;
+
       containers:
-      - image: replace
-        name: devsecops-container
-        env:
-        - name: DB_PASSWORD
-          value: rootpassword 
-        - name: MYSQL_DATABASE
-          value: devsecopsdb
-        - name: DB_USERNAME
-          value: root
-        volumeMounts:
-          - mountPath: /tmp
-            name: vol
+      - name: devsecops-container
+        image: replace
+        imagePullPolicy: IfNotPresent
         securityContext:
           capabilities:
             drop:
              - NET_RAW
-          runAsUser: 100
           runAsNonRoot: true
+          runAsUser: 100
           readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
+        command: ["/bin/sh", "-c"]
+        args:
+          - . /vault/secrets/db-credentials && java -jar /home/k8s-pipeline/app.jar
         resources:
          requests:
           memory: "256Mi"
@@ -47,6 +61,28 @@ spec:
          limits:
           memory: "512Mi"
           cpu: "500m"
+        
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /data
+        - mountPath: /tmp
+          name: vol
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: type
+                operator: In
+                values:
+                - "ondemand"
+                
+      volumes:
+      - name: mysql-data
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+      - name: vol
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
