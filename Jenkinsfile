@@ -155,7 +155,7 @@ environment {
                 "Trivy Scan": {
                     try {
                         timeout(time: 10, unit: 'MINUTES') {
-                            sh "bash trivy-docker-image-scan.sh"
+                            sh "bash CI-securities/trivy/trivy-docker-image-scan.sh"
                         }
                     } catch (e) {
                         errors["Trivy Scan"] = e.message
@@ -163,7 +163,7 @@ environment {
                 },
                 "OPA Conftest": {
                     try {
-                        sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy dockerfile_security.rego Dockerfile'
+                        sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy CI-securities/opa-policy/dockerfile_security.rego Dockerfile'
                     } catch (e) {
                         errors["OPA Conftest"] = e.message
                     }
@@ -215,7 +215,7 @@ environment {
             parallel(
                 "OPA Scan": {
                     try {
-                        sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy opa-k8s-security.rego k8s_deployment_service.yaml'
+                        sh 'docker run --rm -v $(pwd):/project openpolicyagent/conftest test --policy CI-securities/opa-policy/opa-k8s-security.rego k8s_deployment_service.yaml'
                     } catch (e) {
                         errors["OPA Scan"] = e.message
                     }
@@ -223,7 +223,7 @@ environment {
                 "Kubesec Scan": {
                     try {
                         timeout(time: 10, unit: 'MINUTES') {
-                            sh "bash kubesec-scan.sh"
+                            sh "bash CI-securities/kubesecurity/kubesec-scan.sh"
                         }
                     } catch (e) {
                         errors["Kubesec Scan"] = e.message
@@ -231,7 +231,7 @@ environment {
                 },
                 "Trivy Scan": {
                     try {
-                        sh "bash trivy-k8s-scan.sh"
+                        sh "bash CI-securities/trivy/trivy-k8s-scan.sh"
                     } catch (e) {
                         errors["Trivy Scan"] = e.message
                     }
@@ -279,7 +279,7 @@ stage('Scale Up Spot Node Group') {
                 "Deployment": {
                     try {
                         withKubeConfig([credentialsId: 'kubeconfig']) {
-                            sh "bash k8s-deployment.sh"
+                            sh "bash deployments/scripts/k8s-deployment.sh"
                         }
                     } catch (e) {
                         errors["Deployment"] = e.message
@@ -288,7 +288,7 @@ stage('Scale Up Spot Node Group') {
                 "Rollout Status": {
                     try {
                         withKubeConfig([credentialsId: 'kubeconfig']) {
-                            sh "bash k8s-deployment-rollout-status.sh"
+                            sh "bash deployments/scripts/k8s-deployment-rollout-status.sh"
                         }
                     } catch (e) {
                         errors["Rollout Status"] = e.message
@@ -313,7 +313,7 @@ stage('Scale Up Spot Node Group') {
                     ]) {
           try {
             withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "bash integration-test.sh"
+              sh "bash CI-securities/integration-tests/integration-test-DEV.sh"
             }
           } catch (e) {
             withKubeConfig([credentialsId: 'kubeconfig']) {
@@ -329,7 +329,7 @@ stage('Scale Up Spot Node Group') {
   stage('OWASP ZAP - DAST') {
       steps {
         withKubeConfig([credentialsId: 'kubeconfig']) {
-          sh 'bash zap.sh'
+          sh 'bash CI-securities/owasp-zap/zap.sh'
         }
       }
     }
@@ -353,26 +353,26 @@ stage('Scale Up Spot Node Group') {
                         "Run Master Benchmark": {
                             sh """
                             chmod +x cis-master.sh
-                            KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-master.sh
+                            KUBECONFIG_PATH=\$KUBECONFIG_FILE CI-securities/cis-benchmarks/cis-master.sh
                             """
                         },
                         "Run ETCD Benchmark": {
                             sh """
                             chmod +x cis-etcd.sh
-                            KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-etcd.sh
+                            KUBECONFIG_PATH=\$KUBECONFIG_FILE CI-securities/cis-benchmarks/cis-etcd.sh
                             """
                         },
                         "Run Kubelet Benchmark": {
                             sh """
                             chmod +x cis-kubelet.sh
-                            KUBECONFIG_PATH=\$KUBECONFIG_FILE ./cis-kubelet.sh
+                            KUBECONFIG_PATH=\$KUBECONFIG_FILE CI-securities/cis-benchmarks/cis-kubelet.sh
                             """
                         }
                     )
                     // Ensure that all benchmarks are completed before generating the report
                     sh """
-                    chmod +x ./combine_kube_bench_json.sh
-                    ./combine_kube_bench_json.sh
+                    chmod +x CI-securities/cis-benchmarks/combine_kube_bench_json.sh
+                    CI-securities/cis-benchmarks/combine_kube_bench_json.sh
                     if [ ! -s combined-bench.json ]; then
                         echo "{}" > combined-bench.json  # Generate an empty report if kube-bench fails
                     fi
@@ -393,8 +393,8 @@ stage('Scale Up Spot Node Group') {
                     try {
                         withKubeConfig([credentialsId: 'kubeconfig']) {
                             sh "kubectl -n prod apply -f mysql-manifest.yaml "
-                            sh "sed -i 's#replace#${imageName}#g' k8s_PROD-deployment_service.yaml"
-                            sh "kubectl -n prod apply -f k8s_PROD-deployment_service.yaml"
+                            sh "sed -i 's#replace#${imageName}#g' PROD-devsec.yaml"
+                            sh "kubectl -n prod apply -k ./deployments/k8-manifests/ --validate=false"
                         }
                     } catch (e) {
                         errors["Deployment"] = e.message
@@ -403,7 +403,7 @@ stage('Scale Up Spot Node Group') {
                 "Rollout Status": {
                     try {
                         withKubeConfig([credentialsId: 'kubeconfig']) {
-                            sh "bash k8s-PROD-deployment-rollout-status.sh"
+                            sh "bash deployments/scripts/k8s-PROD-deployment-rollout-status.sh"
                         }
                     } catch (e) {
                         errors["Rollout Status"] = e.message
@@ -424,7 +424,7 @@ stage('Scale Up Spot Node Group') {
         script {
           try {
             withKubeConfig([credentialsId: 'kubeconfig']) {
-              sh "bash integration-test-PROD.sh"
+              sh "bash CI-securities/integration-tests/integration-test-PROD.sh"
             }
           } catch (e) {
             withKubeConfig([credentialsId: 'kubeconfig']) {

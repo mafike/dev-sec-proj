@@ -11,13 +11,13 @@ if [[ -z "${imageName}" || -z "${deploymentName}" ]]; then
 fi
 
 # Replace the placeholder in the deployment YAML file with the actual image name
-sed -i "s#replace#${imageName}#g" k8s_deployment_service.yaml
+sed -i "s#replace#${imageName}#g" devsec.yaml
 
 # Check if the deployment exists
 if ! kubectl -n "${namespace}" get deployment "${deploymentName}" > /dev/null 2>&1; then
   echo "Deployment ${deploymentName} does not exist. Creating a new deployment..."
   #kubectl -n "${namespace}" apply -f mysql-manifest.yaml
-  kubectl -n "${namespace}" apply -f k8s_deployment_service.yaml --validate=false
+  kubectl -n "${namespace}" apply -f devsec.yaml --validate=false
 else
   echo "Deployment ${deploymentName} exists. Updating the container image..."
   kubectl -n "${namespace}" set image deployment/${deploymentName} ${containerName}=${imageName} --record=true
@@ -27,5 +27,5 @@ echo "Deployment command executed successfully."
 
 
 
-kubectl -n default apply -f k8s_deployment_service.yaml
+kubectl -n default apply -f devsec.yaml
 ######################### update existing k8s-deployment.sh ######################### 

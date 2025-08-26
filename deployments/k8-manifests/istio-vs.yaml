@@ -1,0 +1,23 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: devsecops-numeric
+  namespace: prod
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - devsecops-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/contact
+    - uri:
+        prefix: /increment
+    - uri:
+        exact: /
+    route:
+    - destination:
+        host: devsecops-svc
+        port:
+          number: 8080
