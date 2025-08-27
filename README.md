@@ -1,329 +1,552 @@
-<h1>Numeric-App</h1>
+# Numeric-App
 
-<p>
-  Welcome to <strong>Numeric-App</strong>, a DevOps-focused project showcasing advanced infrastructure automation, CI/CD pipelines, Kubernetes deployments, microservices communication, and security integration. This repository highlights professional-grade workflows for deploying and managing containerized applications in production-like environments.
+Production-style **DevSecOps** reference: **Java (Spring Boot)** service that **depends on** a **Node.js** service, containerized and deployed to **Kubernetes (EKS)** via **Jenkins CI/CD**, with infrastructure provisioned by **Terraform**. Pipelines, manifests, security gates, and rollout checks are wired to demonstrate real build → deploy → verify flows.
+
+> **Production-readiness note**
+> This repository **models a production system** end-to-end, but it is **not a turnkey prod deployment**. It covers the hard parts—reproducible IaC, gated CI/CD, Kubernetes operations, service-to-service comms, security scanning, and observability. A few enterprise hardening items are intentionally out of scope for the portfolio (HA/DR, secret rotation, strict RBAC, cost/governance).
+
+
+## 🧰 Tech Stack
+
+| Category | Tools | Purpose |
+|---|---|---|
+| Languages & Frameworks | **Java (Spring Boot)**, **Node.js** | Primary microservices (Java depends on Node). |
+| Build & Test | **Maven**, **JUnit**, **JaCoCo**, **PIT** | Build, unit coverage, mutation testing. |
+| Containers & Orchestration | **Docker**, **Kubernetes (EKS)**, **Istio** | Containerize apps; run on EKS; ingress/mesh. |
+| Infrastructure as Code (AWS) | **Terraform** (VPC, subnets, NAT/IGW, Route 53, IAM, EKS, Jenkins/ALB/EFS) | Reproducible provisioning. |
+| CI/CD & Artifacts | **Jenkins** (declarative pipelines), **Nexus** (JARs), **Container Registry** (Docker Hub/compatible) | Build → store artifacts → build/push images. |
+| Code Quality & Policy | **SonarQube**, **OPA Conftest** | SAST + quality gates; Dockerfile/K8s policy checks. |
+| Security Scanning | **Trivy**, **kube-bench**, **kubesec**, **OWASP ZAP**, **Falco** | Image/fs/cluster scans; CIS checks; DAST; runtime threat detection. |
+| Secrets & PKI | **HashiCorp Vault**, **cert-manager** | K8s auth, dynamic DB creds; issuers/certificates. |
+| Observability & Logs | **Prometheus**, **Alertmanager**, **Grafana**, **EFK/ELK**, **Kiali** | Metrics/scraping, alerting, dashboards, logs, mesh topology. |
+| Data/State | **MySQL** | Stateful data store for Node-backed operations. |
+| Packaging & Ops Helpers | **Kustomize**, **Helm** | Manifests/overlays; install add-ons (e.g., Falco, cert-manager). |
+| Collaboration | **Slack** | CI/CD alerts and runtime notifications. |
+
+
+---
+## CI/CD pipeline with security gates
+```mermaid
+flowchart LR
+  %% Nodes
+  repo["Source: GitHub (PR/Main)"]
+  jenkins["Jenkins (Declarative Pipeline)"]
+
+  build["Maven Build (package)"]
+  unit["Unit Tests + JaCoCo"]
+  mutation["Mutation Tests (PIT)"]
+
+  sonar["SonarQube Analysis"]
+  gateSQ{"Quality Gate pass?"}
+
+  nexus["Upload Artifact (.jar) → Nexus"]
+
+  depScan["Dependency, Trivy and OPA policy scans"]
+  imgBuild["Docker Build"]
+  imgScan["Trivy Image Scan"]
+  policy["OPA Conftest (Dockerfile/K8s)"]
+  gatePolicy{"Policy/Scan pass?"}
+
+  push["Push Image → Registry"]
+  k8sScan["K8s Scans: kube-bench · kubesec · trivy"]
+
+  deployDev["Deploy to Kubernetes: DEV"]
+  rolloutDev["Wait for Rollout (DEV)"]
+  itDev["Integration Tests: DEV"]
+  dast["OWASP ZAP (DAST)"]
+  gateDAST{"DAST pass?"}
+
+  approve{"Manual Approval → PROD"}
+  deployProd["Deploy to Kubernetes: PROD"]
+  rolloutProd["Wait for Rollout (PROD)"]
+  itProd["Integration Tests: PROD"]
+
+  notify["Slack Notifications"]
+  fix["Fix code & re-run"]
+
+  %% Edges
+  repo --> jenkins
+  jenkins --> build
+  build --> unit
+  unit --> mutation
+  mutation --> sonar
+  sonar --> gateSQ
+
+  gateSQ -->|pass| nexus
+  gateSQ -->|fail| fix
+
+  nexus --> depScan
+  depScan --> imgBuild
+  imgBuild --> imgScan
+  imgScan --> policy
+  policy --> gatePolicy
+
+  gatePolicy -->|pass| push
+  gatePolicy -->|fail| fix
+
+  push --> k8sScan
+  k8sScan --> deployDev
+  deployDev --> rolloutDev
+  rolloutDev --> itDev
+  itDev --> dast
+  dast --> gateDAST
+
+  gateDAST -->|pass| approve
+  gateDAST -->|fail| fix
+
+  approve -->|approved| deployProd
+  deployProd --> rolloutProd
+  rolloutProd --> itProd
+  itProd --> notify
+
+  fix --> repo
+```
+---
+## 📸 Live Screenshots
+
+> Real runs from this repo. Click to view full size.
+
+### CI/CD — Jenkins Pipeline
+<p align="center">
+  <a href="docs/jenkins-pipeline.png">
+    <img src="docs/jenkins-pipeline.png" alt="Jenkins pipeline with quality gates, scans, DEV deploy, approval, PROD deploy" width="900">
+  </a>
 </p>
-<div style="text-align: center; margin: 30px 0;">
-  <img src="./slack-emojis/ms.png" alt="Microservice" style="width:150px; margin: 15px;">
-  <img src="./slack-emojis/aws.png" alt="AWS" style="width:150px; margin: 15px;">
-  <img src="./slack-emojis/k8.png" alt="Kubernetes" style="width:150px; margin: 15px;">
-  <img src="./slack-emojis/kiali.png" alt="Kiali" style="width:150px; margin: 15px;">
-</div>
-<h2>About the Project</h2>
-<p>
-  <strong>Numeric-App</strong> consists of a <em>microservice architecture</em> that includes:
-  <ol>
-    <li><strong>Java Microservice</strong>: The primary application built using Java.</li>
-    <li><strong>Node.js Microservice</strong>: A secondary service required for the Java app to function properly.</li>
-  </ol>
+---
+
+## runtime system map on Kubernetes.
+```mermaid
+flowchart LR
+  user["User (Browser)"]
+  dns["Public DNS / TLS"]
+  igw["Istio IngressGateway"]
+
+  subgraph Cluster["Kubernetes (EKS)"]
+    subgraph AppNS["App Namespace"]
+      devsvc["Service: devsecops-svc"]
+      javaD["Deployment: devsecops (Java)"]
+      nodeS["Service: node-service:5000"]
+      nodeD["Deployment: node-app (Node.js)"]
+      mysqlS["Service: mysql-service"]
+      mysqlSS["StatefulSet: MySQL"]
+    end
+    subgraph Platform["Platform Services"]
+      vault["Vault + Agent Injector"]
+      certm["cert-manager"]
+      prom["Prometheus"]
+      graf["Grafana"]
+      alertm["Alertmanager"]
+      kiali["Kiali"]
+      efk["EFK (Fluentd/Elastic/Kibana)"]
+      falco["Falco"]
+    end
+  end
+
+  user --> dns
+  dns --> igw
+  igw --> devsvc
+  devsvc --> javaD
+  javaD --> nodeS
+  nodeS --> nodeD
+  nodeD --> mysqlS
+  mysqlS --> mysqlSS
+
+  nodeD -. "request dynamic DB creds" .-> vault
+  vault -. "short-lived secrets" .-> nodeD
+
+  certm --> igw
+  certm --> devsvc
+
+  prom -. "scrape metrics" .- devsvc
+  prom -. "scrape metrics" .- javaD
+  prom -. "scrape metrics" .- nodeS
+  prom -. "scrape metrics" .- mysqlS
+  prom --> graf
+  prom --> alertm
+
+  efk --> graf
+  efk --> kib[Kibana]
+
+  kiali --> igw
+
+  alertm --> slack1["Slack #prometheus"]
+  falco --> slack2["Slack #falco"]
+```
+---
+### Runtime — Kiali Service Graph
+<p align="center">
+  <a href="docs/kiali.png">
+    <img src="docs/kiali.png" alt="Istio service graph: ingress → devsecops-svc → node-service → mysql-service with Vault injector" width="900">
+  </a>
 </p>
 
-<p>
-  The project demonstrates:
-</p>
-<ul>
-  <li><strong>Infrastructure Automation:</strong> Terraform for scalable infrastructure provisioning.</li>
-  <li><strong>CI/CD Pipelines:</strong> Automated pipelines built with Jenkins.</li>
-  <li><strong>Microservice Communication:</strong> Kubernetes and Docker setup to establish communication between services.</li>
-  <li><strong>Security Integration:</strong> Automated compliance checks with tools like Trivy, Kube-Bench, and OPA.</li>
-</ul>
+### Alerting — Slack
+<table>
+<tr>
+<td>
+  <a href="docs/alerts-prometheus-slac.png">
+    <img src="docs/alerts-prometheus-slack.png" alt="Alertmanager → Slack: InstanceDown alerts" width="440">
+  </a>
+</td>
+<td>
+  <a href="docs/alerts-falco-slack.png">
+    <img src="docs/alerts-falco-slack.png" alt="Falco → Slack: runtime event" width="440">
+  </a>
+</td>
+</tr>
+</table>
+---
 
-<div style="border: 1px solid #ddd; padding: 15px; background: #f9f9f9;">
-  <strong>Important:</strong> Before running the Java application pipeline, ensure the Node.js microservice is running. The Java app depends on the Node.js service for its functionality.
-</div>
+## 📦 Project Structure
 
-<h2>Microservice Setup</h2>
-<h3>Node.js Microservice</h3>
-<p>
-  The Node.js microservice can be run in two ways: using Docker or deploying it to Kubernetes.
-</p>
+.
+├── src/ # Java microservice (primary app)
+│ 
+│
+├── deployments/ # Runtime deployment assets
+│ ├── k8-manifests/ # Kubernetes manifests (dev/prod)
+│ │ ├── devsec.yaml # Deployment (Java)
+│ │ ├── devsec-svc.yaml # Service (Java)
+│ │ ├── PROD-devsec.yaml # Prod Deployment (Java)
+│ │ ├── PROD-devsec-svc.yaml # Prod Service (Java)
+│ │ ├── istio-gw.yaml #  Istio Gateway
+│ │ ├── istio-vs.yaml #  Istio VirtualService
+│ │ ├── mysql-*.yaml #  MySQL (cm/sc/svc/netpol)
+│ │ └── kustomization.yaml # Kustomize entry 
+│ └── scripts/
+│ ├── k8s-deployment.sh # Apply manifests
+│ ├── k8s-deployment-rollout-status.sh# Wait for rollout
+│ └── k8s-PROD-deployment-rollout-status.sh
+│
+├── CI-securities/ # CI security & integration checks
+│ ├── integration-tests/
+│ │ ├── integration-test-DEV.sh # Dev smoke/integration tests
+│ │ └── integration-test-PROD.sh # Prod smoke/integration tests
+│ ├── trivy/ # Image/cluster scans
+│ │ ├── trivy-docker-image-scan.sh
+│ │ └── trivy-k8s-scan.sh
+│ ├── cis-benchmarks/ # kube-bench helpers
+│ │ ├── cis-master.sh
+│ │ ├── cis-kubelet.sh
+│ │ ├── cis-etcd.sh
+│ │ └── combine_kube_bench_json.sh
+│ ├── kubesecurity/ # Kubesec policy scan
+│ │ └── kubesec-scan.sh
+│ └── opa-policy/ # OPA/Rego policies
+│ ├── dockerfile_security.rego
+│ └── opa-k8s-security.rego
+│
+├── terraform-setup/ # IaC for AWS (EKS + Jenkins)
+│ ├── eks-setup/
+│ │ ├── eks/ # Root module (backend.tf, main.tf, variables.tf, dev.tfvars)
+│ │ └── module/ # Reusable VPC/EKS/IAM modules
+│ └── jenkins-setup/ # Jenkins infra (ALB/EFS/roles)
+│ ├── main.tf providers.tf vars.tf …
+│ └── jenkins-plugins/ # Jenkins bootstrap (plugins.txt, installer.sh)
+│
+├── Jenkinsfile # CI/CD pipeline (build → image → deploy → tests)
+├── Dockerfile # Java service container
+├── pom.xml # Maven build descriptor
+├── generate_kube_bench_report.py # kube-bench JSON → readable report
+└── vars/ # Jenkins shared library helpers
 
-<h4>Docker Setup</h4>
-<div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
-  <pre><code>docker run -p 8787:5000 mafike1/node-app:latest</code></pre>
-</div>
-<p>Verify the service is running by executing:</p>
-<div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
-  <pre><code>curl localhost:8787/plusone/99</code></pre>
-</div>
+## Microservice Setup — Node.js dependency
 
-<h4>Kubernetes Deployment</h4>
-<p>To deploy the Node.js microservice in Kubernetes:</p>
-<ol>
-  <li>Create a deployment:
-    <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
-      <pre><code>kubectl create deploy node-app --image mafike1/node-app:latest</code></pre>
-    </div>
-  </li>
-  <li>Expose the service within the cluster:
-    <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
-      <pre><code>kubectl expose deploy node-app --name node-service --port 5000 --type ClusterIP</code></pre>
-    </div>
-  </li>
-  <li>Verify the service is running:
-    <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
-      <pre><code>
-kubectl get svc node-service
-curl &lt;node-service-ip&gt;:5000/plusone/99
-      </code></pre>
-    </div>
-  </li>
-</ol>
+The Java service **requires** the Node.js service. Run it **locally (Docker)** or **in-cluster (Kubernetes)**.
 
-<h3>Java Application</h3>
-<p>
-  Once the Node.js microservice is running, the Java application can be deployed using the provided CI/CD pipeline. The pipeline builds the Java app, creates a Docker image, and deploys it to Kubernetes.
-</p>
+### Option A — Docker (local)
+```bash
+# Run Node service on localhost:8787
+docker run -d --rm --name node-app -p 8787:5000 mafike1/node-app:latest
 
-<h2>Repository Structure</h2>
-<ul>
-  <li><code>src/</code>: Java microservice source code.</li>
-  <li><code>efk/</code>: create kubernetes eks stack</li>
-  <li><code>generate_kube_bench_report.py/</code>: python json parser script to convert kubench report into proper formatting.</li>
-  <li><code>k8s-deployment-service/</code>: Kubernetes manifests for java app deployments for dev environment.</li>
-   <li><code>k8s_PROD-deployment-service/</code>: Kubernetes manifests for java app deployments for prod environment.</li>
-  <li><code>terraform-setup/</code>: AWS Infrastructure provisioning with Terraform for both eks and jenkins. Please run this commands to create the aws vpc first if intended to have jenkins server running before eks since the jenkins configuration depends on the eks state;
-  <div style="background-color: #2d2d2d; padding: 10px; color: #f1f1f1; font-family: monospace; border-radius: 5px;">
-      <pre><code>
-      terraform apply -var-file=dev.tfvars -target= module.eks.aws_subnet.public-subnet
-      terraform apply -var-file=dev.tfvars -target=module.eks.aws_subnet.public-subnet
-      terraform plan -var-file=dev.tfvars
-      terraform apply -var-file=dev.tfvars -target=module.eks.aws_subnet.private-subnet
-      terraform apply -var-file=dev.tfvars -target=module.eks.aws_route_table_association.name
-    </code></pre>
-  </div>
-  </li>
-  <li><code>jenkins-plugins</code>: Automatic jenkins plugins installation for this project. </li>
-  <li><code>integration-test.sh/</code>: Integration and rollout testing scripts for jenkins DEV/STAGING stage.</li>
-  <li><code>integration-test-PROD.sh/</code>: Integration and rollout testing scripts for jenkins production stage.</li>
-  <li><code>Jenkinsfile</code>: CI/CD pipeline configuration for the Java microservice.</li>
-  <li><code>Dockerfile</code>: Docker image build configuration for the Java microservice.</li>
-</ul>
-<h2>Prerequisites</h2>
-<p>
-  Follow these steps to set up the environment in your Kubernetes cluster before deploying the application.
-</p>
+# Smoke test (expects 100 for input 99)
+curl http://localhost:8787/plusone/99
+# -> 100
 
-<h3>1. Install Istio and Add-ons</h3>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>
-  curl -L https://istio.io/downloadIstio | sh -
-  cd istio-1.24.2
-  export PATH=$PWD/bin:$PATH
-  istioctl install --set profile=demo -y && kubectl apply -f samples/addons
-  </code></pre>
-</div>
+# Stop (when done)
+docker stop node-app
 
-<h3>2. Deploy Vault</h3>
-<p><strong>Step 1:</strong> Create a Namespace for Vault</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>kubectl create ns vault</code></pre>
-</div>
+## Option B — Kubernetes (in cluster); Uses the default namespace. Adjust -n <ns> if you use another.
+# 1) Create Deployment
+kubectl create deployment node-app \
+  --image=mafike1/node-app:latest
 
-<p><strong>Step 2:</strong> Install Vault Using Helm</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>helm install vault hashicorp/vault --namespace vault \
-    --set "injector.enabled=true" \
-    --set "injector.agentSidecarImagePullPolicy=Always"</code></pre>
-</div>
+# 2) Expose as a ClusterIP Service on port 5000
+kubectl expose deployment node-app \
+  --name=node-service \
+  --port=5000 \
+  --type=ClusterIP
 
-<p><strong>Step 3:</strong> Initialize and Unseal Vault</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>kubectl exec vault-0 -n vault -- vault operator init -key-shares=1 -key-threshold=1 -format=json > init-keys.json
-VAULT_UNSEAL_KEY=$(cat init-keys.json | jq -r ".unseal_keys_b64[]")
-kubectl exec vault-0 -n vault -- vault operator unseal $VAULT_UNSEAL_KEY
-VAULT_ROOT_TOKEN=$(cat init-keys.json | jq -r ".root_token")
-kubectl exec vault-0 -n vault -- vault login $VAULT_ROOT_TOKEN</code></pre>
-</div>
+# 3) Wait for rollout
+kubectl rollout status deploy/node-app
 
-<p><strong>Step 4:</strong> Enable and Configure Database Secrets</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>vault secrets enable database
+Verify (in-cluster): ClusterIP isn’t reachable from your laptop. Exec a temporary curl pod:
+kubectl run curl --rm -it --restart=Never \
+  --image=curlimages/curl:8.7.1 \
+  --command -- sh -c 'curl -s http://node-service:5000/plusone/99'
+# -> 100
+
+Verify (from your laptop) via port-forward (optional):
+kubectl port-forward svc/node-service 8787:5000 &
+curl http://localhost:8787/plusone/99
+
+Cleanup:
+kubectl delete svc/node-service
+kubectl delete deploy/node-app
+Service DNS (for other pods): http://node-service:5000
+---
+
+## Provision the Infrastructure with Terraform (EKS + Jenkins)
+
+The IaC lives under `terraform-setup/`:
+
+- `eks-setup/eks/` — root module (state backend, VPC/EKS, variables, `dev.tfvars`)
+- `eks-setup/module/` — reusable VPC/EKS/IAM modules
+- `jenkins-setup/` — Jenkins ALB/EFS/roles (uses outputs from the EKS stack)
+- `jenkins-setup/jenkins-plugins/` — plugin bootstrap (installer + plugins.txt)
+
+### Prereqs
+- Terraform ≥ 1.5, AWS CLI configured (`AWS_PROFILE`, `AWS_REGION`)
+- S3/DynamoDB backend configured in `backend.tf` (recommended)
+
+---
+
+> Files live under `terraform-setup/eks-setup/eks`.  
+> Run from that directory. Terraform will print the needed outputs after each apply.
+
+```bash
+# one-time setup
+terraform init
+terraform validate
+
+# 1) Create public subnets first (for ALB/NAT/etc.)
+terraform apply -var-file=dev.tfvars -target=module.eks.aws_subnet.public-subnet
+
+# 2) Preview current plan
+terraform plan -var-file=dev.tfvars
+
+# 3) Create private subnets
+terraform apply -var-file=dev.tfvars -target=module.eks.aws_subnet.private-subnet
+
+# 4) Wire route table associations
+terraform apply -var-file=dev.tfvars -target=module.eks.aws_route_table_association.name
+
+# 5) RECOMMENDED: reconcile everything else
+terraform apply -var-file=dev.tfvars
+
+## ✅ Prerequisites (cluster setup before deploying the app)
+
+Follow these steps on your Kubernetes cluster.
+
+---
+
+### 1) Install **Istio** and add-ons
+```bash
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.24.2
+export PATH="$PWD/bin:$PATH"
+
+# Mesh (demo profile) + built-in add-ons (Prometheus, Grafana, Kiali, Jaeger)
+istioctl install --set profile=demo -y
+kubectl apply -f samples/addons
+2) Deploy Vault (Kubernetes auth + injector)
+2.1 Create namespace
+kubectl create namespace vault
+2.2 Install via Helm
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update
+
+helm install vault hashicorp/vault -n vault \
+  --set injector.enabled=true \
+  --set injector.agentSidecarImagePullPolicy=Always
+2.3 Initialize and unseal
+# init (single share for demo) and capture keys/tokens locally
+kubectl -n vault exec vault-0 -- \
+  vault operator init -key-shares=1 -key-threshold=1 -format=json > init-keys.json
+
+# unseal
+VAULT_UNSEAL_KEY=$(jq -r '.unseal_keys_b64[0]' init-keys.json)
+kubectl -n vault exec vault-0 -- vault operator unseal "$VAULT_UNSEAL_KEY"
+
+# login with root token (demo)
+VAULT_ROOT_TOKEN=$(jq -r '.root_token' init-keys.json)
+kubectl -n vault exec vault-0 -- vault login "$VAULT_ROOT_TOKEN"
+2.4 Enable & configure Database secrets (MySQL)
+Adjust the MySQL Service DNS/port if your name/namespace differ.
+Open a shell inside the Vault pod:
+kubectl -n vault exec -it vault-0 -- sh
+Inside the pod:
+vault secrets enable database
+
 vault write database/config/mysql \
-    plugin_name=mysql-database-plugin \
-    connection_url="{{username}}:{{password}}@tcp(mysql-service.default.svc.cluster.local:3306)/" \
-    allowed_roles="devsecops-role" \
-    username="root" \
-    password="rootpassword"
+  plugin_name=mysql-database-plugin \
+  connection_url="{{username}}:{{password}}@tcp(mysql-service.default.svc.cluster.local:3306)/" \
+  allowed_roles="devsecops-role" \
+  username="root" \
+  password="rootpassword"
+
 vault write database/roles/devsecops-role \
-    db_name=mysql \
-    creation_statements="CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}'; GRANT ALL PRIVILEGES ON mysql.* TO '{{name}}'@'%';" \
-    default_ttl="1h" \
-    max_ttl="24h"</code></pre>
-</div>
+  db_name=mysql \
+  creation_statements="CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}'; GRANT ALL PRIVILEGES ON mysql.* TO '{{name}}'@'%';" \
+  default_ttl="1h" \
+  max_ttl="24h"
 
-<h3>3. Configure PKI in Vault</h3>
-<p><strong>Step 1:</strong> Enable PKI and Generate Certificates</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>vault secrets enable pki
+exit
+3) Configure PKI in Vault (root CA for demo)
+Open a shell in the Vault pod again:
+kubectl -n vault exec -it vault-0 -- sh
+Inside the pod:
+vault secrets enable pki
 vault secrets tune -max-lease-ttl=8760h pki
+
 vault write pki/root/generate/internal \
-    common_name=mydevsecopapp.com \
-    ttl=8760h</code></pre>
-</div>
+  common_name="mydevsecopapp.com" \
+  ttl=8760h
 
-<p><strong>Step 2:</strong> Configure Certificate Issuing URLs</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>vault write pki/config/urls \
-    issuing_certificates="http://vault.vault.svc.cluster.local:8200/v1/pki/ca" \
-    crl_distribution_points="http://vault.vault.svc.cluster.local:8200/v1/pki/crl"</code></pre>
-</div>
-<h3>4. Install Cert-Manager</h3>
-<p><strong>Step 1:</strong> Install CRDs</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.12.3/cert-manager.crds.yaml</code></pre>
-</div>
+vault write pki/config/urls \
+  issuing_certificates="http://vault.vault.svc.cluster.local:8200/v1/pki/ca" \
+  crl_distribution_points="http://vault.vault.svc.cluster.local:8200/v1/pki/crl"
 
-<p><strong>Step 2:</strong> Install Cert-Manager Using Helm</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>helm install cert-manager --namespace cert-manager --version v1.12.3 jetstack/cert-manager</code></pre>
-</div>
+exit
 
-<h3>4. Configure Vault-Issuer and Certificates</h3>
+## 4) Install **cert-manager** and issue certs from **Vault**
 
-<p><strong>Step 1:</strong> Create Service Account and Secret</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>kubectl create serviceaccount issuer -n istio-system
+### 4.1 Install cert-manager (CRDs + Helm chart)
+```bash
+# CRDs
+kubectl apply --validate=false -f \
+  https://github.com/jetstack/cert-manager/releases/download/v1.12.3/cert-manager.crds.yaml
 
-cat > issuer-secret.yaml <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  namespace: istio-system
-  name: issuer-token-lmzpj
-  annotations:
-    kubernetes.io/service-account.name: issuer
-type: kubernetes.io/service-account-token
-EOF
+# Helm chart
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.12.3
 
-kubectl apply -f issuer-secret.yaml
-  </code></pre>
-</div>
-
-<p><strong>Step 2:</strong> Create and Apply Vault Issuer</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>cat > vault-issuer.yaml <<EOF
+# Verify
+kubectl get pods -n cert-manager
+4.2 Create a Vault-backed Issuer (Kubernetes auth – recommended)
+Assumes Vault is reachable at http://vault.vault.svc.cluster.local:8200 and PKI is enabled (from earlier step).
+You also need a Vault Kubernetes auth role that trusts the issuer ServiceAccount in istio-system.
+(a) ServiceAccount for cert-manager to use:
+kubectl create namespace istio-system --dry-run=client -o yaml | kubectl apply -f -
+kubectl create serviceaccount issuer -n istio-system
+(b) Vault Issuer (YAML):
+# vault-issuer.yaml
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  namespace: istio-system
   name: vault-issuer
+  namespace: istio-system
 spec:
   vault:
-    server: http://vault.vault.svc:8200
-    path: pki/sign/mydev
+    server: http://vault.vault.svc.cluster.local:8200
+    # This path must match a Vault PKI role you've created (e.g., pki/roles/devsecops)
+    path: pki/sign/devsecops
     auth:
       kubernetes:
         mountPath: /v1/auth/kubernetes
-        role: devsecops-role
-        secretRef:
-          name: issuer-token-lmzpj
-          key: token
-EOF
-
-kubectl apply --filename vault-issuer.yaml
-  </code></pre>
-</div>
-
-<p><strong>Step 3:</strong> Create Certificate</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>cat > devsecops-cert.yaml <<EOF
+        role: devsecops-issuer   # <-- Vault auth role name
+        serviceAccountRef:
+          name: issuer
+Apply:
+kubectl apply -f vault-issuer.yaml
+If you insist on token-secret auth instead of Kubernetes auth: create a Secret of type kubernetes.io/service-account-token bound to issuer, then use tokenSecretRef under spec.vault.auth.tokenSecretRef. Kubernetes auth is safer—prefer it.
+4.3 Request a certificate
+# devsecops-cert.yaml
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  name: devsecops-cert
   namespace: istio-system
-  name: mydevsecopapp.com
 spec:
-  secretName: devsecops
+  secretName: devsecops-tls
   issuerRef:
     name: vault-issuer
-  commonName: www.mydevsecopapp.com
+    kind: Issuer
+  commonName: mydevsecopapp.com
   dnsNames:
-  - www.mydevsecopapp.com
-EOF
-
-kubectl apply --filename devsecops-cert.yaml
-  </code></pre>
-</div>
-
-<p><strong>Step 4:</strong> Verify Certificate</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>kubectl describe certificate.cert-manager mydevsecopapp.com -n istio-system</code></pre>
-</div>
-
-<h3>5. Install Falco for Runtime Security</h3>
-
-<p><strong>Step 1:</strong> Install Helm (if not already installed)</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>export VERIFY_CHECKSUM=false
-curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    - mydevsecopapp.com
+Apply and verify:
+kubectl apply -f devsecops-cert.yaml
+kubectl describe certificate.cert-manager devsecops-cert -n istio-system
+kubectl get secret devsecops-tls -n istio-system
+Use the resulting devsecops-tls secret in your Ingress/Istio Gateway.
+5) Install Falco (runtime security)
+# Helm (if not already installed)
+export VERIFY_CHECKSUM=false
+curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 helm version
-  </code></pre>
-</div>
 
-<p><strong>Step 2:</strong> Install Falco Using Helm</p>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>helm repo add falcosecurity https://falcosecurity.github.io/charts
+# Falco + Sidekick + Web UI + Slack
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo update
+helm install --replace falco falcosecurity/falco \
+  --namespace falco --create-namespace \
+  --set falcosidekick.enabled=true \
+  --set falcosidekick.webui.enabled=true \
+  --set falcosidekick.config.slack.webhookurl="<YOUR_SLACK_WEBHOOK_URL>" \
+  --set falcosidekick.config.customfields="environment:production,datacenter:us-east-2"
 
-helm install --replace falco --namespace falco --create-namespace falcosecurity/falco \
-    --set falcosidekick.enabled=true \
-    --set falcosidekick.webui.enabled=true \
-    --set falcosidekick.config.slack.webhookurl="<YOUR_SLACK_WEBHOOK_URL>" \
-    --set falcosidekick.config.customfields="environment:production, datacenter:us-east-2"
-  </code></pre>
-</div>
+# Verify
+kubectl get pods -n falco
 
-<h2>Jenkins Integration: Slack Notifications</h2>
+## Jenkins Integration: Slack Notifications
 
-<p>The Jenkins pipeline in this project includes Slack notifications to keep you updated on pipeline status. Follow these steps to enable Slack integration:</p>
+The pipeline sends Slack alerts for build/deploy status.
 
-<h3>1. Slack Setup</h3>
-<ul>
-  <li><strong>Workspace and Channel:</strong> Create a Slack workspace and a dedicated channel (e.g., #jenkins-alerts).</li>
-  <li><strong>Bot Setup:</strong>
-    <ul>
-      <li>Visit the <a href="https://api.slack.com" target="_blank">Slack API</a> and create a new app.</li>
-      <li>Assign permissions under OAuth & Permissions:
-        <ul>
-          <li>chat:write</li>
-          <li>channels:read</li>
-          <li>groups:read</li>
-          <li>channels:join</li>
-        </ul>
-      </li>
-      <li>Add the bot to your Slack channel and note the <strong>Bot User OAuth Token</strong>.</li>
-    </ul>
-  </li>
-</ul>
+### 1) Slack setup
+- **Workspace & channel:** create a channel (e.g., `#jenkins-alerts`).
+- **Create app:** in Slack API, create an app and install it to your workspace.
+- **OAuth scopes (minimum):** `chat:write`, `channels:read`, `groups:read`, `channels:join`.
+- **Add the app to the channel** and copy the **Bot User OAuth Token** (`xoxb-…`). Keep it secret.
 
-<h3>2. Jenkins Configuration</h3>
-<ul>
-  <li><strong>Global Slack Notifier:</strong> Use the token and workspace/channel details.</li>
-  <li><strong>Shared Library:</strong> Add the shared library named <code>slack</code> in Global Pipeline Libraries.</li>
-</ul>
+### 2) Jenkins configuration
+- **Plugin:** install **Slack** (Slack Notification) plugin.
+- **Credentials:** add the Bot token as a **Secret text** credential (ID: `slack-credentials-id`).
+- **Global config:** *Manage Jenkins → System → Slack* — set workspace/team, default channel, and select the credential.
+- **Shared Library (optional):** add a library named `slack` under *Global Pipeline Libraries* if you use shared helpers.
 
-<h3>Jenkinsfile: Environment Variables</h3>
-<div style="border: 1px solid #ddd; padding: 20px; background: #f9f9f9; border-radius: 8px;">
-  <pre><code>@Library('slack') _
+### 3) Jenkinsfile (example)
+```groovy
+@Library('slack') _
 pipeline {
   agent any
-
   environment {
     KUBE_BENCH_SCRIPT = "cis-master.sh"
-    deploymentName = "devsecops"
-    containerName = "devsecops-container"
-    serviceName = "devsecops-svc"
-    imageName = "mafike1/numeric-app:${GIT_COMMIT}"
-    applicationURI = "/increment/99"
-    CLUSTER_NAME = "dev-medium-eks-cluster"
+    deploymentName    = "devsecops"
+    containerName     = "devsecops-container"
+    serviceName       = "devsecops-svc"
+    imageName         = "mafike1/numeric-app:${GIT_COMMIT}"
+    applicationURI    = "/increment/99"
+    CLUSTER_NAME      = "dev-medium-eks-cluster"
+  }
+  stages {
+    stage('Notify start') {
+      steps {
+        slackSend channel: '#jenkins-alerts',
+                  message: "Build ${env.JOB_NAME} #${env.BUILD_NUMBER} started on ${env.BRANCH_NAME}",
+                  tokenCredentialId: 'slack-credentials-id'
+      }
+    }
+    // … your build/test/deploy stages …
+    stage('Notify success') {
+      when { expression { currentBuild.currentResult == 'SUCCESS' } }
+      steps {
+        slackSend channel: '#jenkins-alerts',
+                  message: "✅ Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                  tokenCredentialId: 'slack-credentials-id'
+      }
+    }
+  }
+  post {
+    failure {
+      slackSend channel: '#jenkins-alerts',
+                message: "❌ Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nSee: ${env.BUILD_URL}",
+                tokenCredentialId: 'slack-credentials-id'
+    }
   }
 }
-  </code></pre>
-</div>
-
-<h3>Precautions</h3>
-<ul>
-  <li>Replace <code>slack-credentials-id</code> with your Jenkins Slack token credentials.</li>
-  <li>Modify the <code>imageName</code> and <code>CLUSTER_NAME</code> if necessary to match your environment.</li>
-</ul>
 
