@@ -200,23 +200,11 @@ flowchart LR
 ---
 
 ## 📦 Project Structure (Essential Only)
-
+```
+.
 .
 ├── src/ # Java microservice (primary app)
-│ ├── main
-│ │ ├── java/com/devsecops
-│ │ │ ├── NumericApplication.java # Spring Boot entrypoint
-│ │ │ ├── NumericController.java # Core REST endpoints
-│ │ │ ├── controller/ # Additional controllers (e.g., ContactController)
-│ │ │ ├── model/ # Domain models (e.g., Contact)
-│ │ │ ├── repository/ # Spring Data repositories
-│ │ │ └── WebSecurityConfig.java # Basic security config
-│ │ └── resources
-│ │ ├── application.properties # App config
-│ │ ├── templates/ # Thymeleaf views (e.g., increment.html)
-│ │ └── static/ # Static assets (css/js)
-│ └── test/java/com/devsecops
-│ └── NumericApplicationTests.java # Minimal tests
+│ 
 │
 ├── deployments/ # Runtime deployment assets
 │ ├── k8-manifests/ # Kubernetes manifests (dev/prod)
@@ -224,10 +212,10 @@ flowchart LR
 │ │ ├── devsec-svc.yaml # Service (Java)
 │ │ ├── PROD-devsec.yaml # Prod Deployment (Java)
 │ │ ├── PROD-devsec-svc.yaml # Prod Service (Java)
-│ │ ├── istio-gw.yaml # (Optional) Istio Gateway
-│ │ ├── istio-vs.yaml # (Optional) Istio VirtualService
-│ │ ├── mysql-*.yaml # (Optional) MySQL (cm/sc/svc/netpol)
-│ │ └── kustomization.yaml # Kustomize entry (fix spelling if needed)
+│ │ ├── istio-gw.yaml #  Istio Gateway
+│ │ ├── istio-vs.yaml #  Istio VirtualService
+│ │ ├── mysql-*.yaml #  MySQL (cm/sc/svc/netpol)
+│ │ └── kustomization.yaml # Kustomize entry 
 │ └── scripts/
 │ ├── k8s-deployment.sh # Apply manifests
 │ ├── k8s-deployment-rollout-status.sh# Wait for rollout
@@ -262,13 +250,9 @@ flowchart LR
 ├── Jenkinsfile # CI/CD pipeline (build → image → deploy → tests)
 ├── Dockerfile # Java service container
 ├── pom.xml # Maven build descriptor
-├── SECURITY.md # Security posture & scanning notes
 ├── generate_kube_bench_report.py # kube-bench JSON → readable report
-├── README.md # Project documentation
 └── vars/ # Jenkins shared library helpers
-├── dockerAgent.groovy
-├── mavenAgent.groovy # (fix double dot in filename)
-└── sendNotification.groovy
+```
 
 ## Microservice Setup — Node.js dependency
 
