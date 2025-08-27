@@ -199,11 +199,24 @@ flowchart LR
 </table>
 ---
 
-## 📦 Project Structure
+## 📦 Project Structure (Essential Only)
+
 .
 ├── src/ # Java microservice (primary app)
-│ ├── main/… # code, resources, templates, static
-│ └── test/… # tests
+│ ├── main
+│ │ ├── java/com/devsecops
+│ │ │ ├── NumericApplication.java # Spring Boot entrypoint
+│ │ │ ├── NumericController.java # Core REST endpoints
+│ │ │ ├── controller/ # Additional controllers (e.g., ContactController)
+│ │ │ ├── model/ # Domain models (e.g., Contact)
+│ │ │ ├── repository/ # Spring Data repositories
+│ │ │ └── WebSecurityConfig.java # Basic security config
+│ │ └── resources
+│ │ ├── application.properties # App config
+│ │ ├── templates/ # Thymeleaf views (e.g., increment.html)
+│ │ └── static/ # Static assets (css/js)
+│ └── test/java/com/devsecops
+│ └── NumericApplicationTests.java # Minimal tests
 │
 ├── deployments/ # Runtime deployment assets
 │ ├── k8-manifests/ # Kubernetes manifests (dev/prod)
@@ -211,30 +224,30 @@ flowchart LR
 │ │ ├── devsec-svc.yaml # Service (Java)
 │ │ ├── PROD-devsec.yaml # Prod Deployment (Java)
 │ │ ├── PROD-devsec-svc.yaml # Prod Service (Java)
-│ │ ├── istio-gw.yaml # Istio Gateway
-│ │ ├── istio-vs.yaml # Istio VirtualService
-│ │ ├── mysql-*.yaml # MySQL (cm/sc/svc/netpol)
-│ │ └── kustomization.yaml # Kustomize entry (fixed spelling)
+│ │ ├── istio-gw.yaml # (Optional) Istio Gateway
+│ │ ├── istio-vs.yaml # (Optional) Istio VirtualService
+│ │ ├── mysql-*.yaml # (Optional) MySQL (cm/sc/svc/netpol)
+│ │ └── kustomization.yaml # Kustomize entry (fix spelling if needed)
 │ └── scripts/
-│ ├── k8s-deployment.sh
-│ ├── k8s-deployment-rollout-status.sh
+│ ├── k8s-deployment.sh # Apply manifests
+│ ├── k8s-deployment-rollout-status.sh# Wait for rollout
 │ └── k8s-PROD-deployment-rollout-status.sh
 │
 ├── CI-securities/ # CI security & integration checks
 │ ├── integration-tests/
-│ │ ├── integration-test-DEV.sh
-│ │ └── integration-test-PROD.sh
-│ ├── trivy/
+│ │ ├── integration-test-DEV.sh # Dev smoke/integration tests
+│ │ └── integration-test-PROD.sh # Prod smoke/integration tests
+│ ├── trivy/ # Image/cluster scans
 │ │ ├── trivy-docker-image-scan.sh
 │ │ └── trivy-k8s-scan.sh
-│ ├── cis-benchmarks/
+│ ├── cis-benchmarks/ # kube-bench helpers
 │ │ ├── cis-master.sh
 │ │ ├── cis-kubelet.sh
 │ │ ├── cis-etcd.sh
 │ │ └── combine_kube_bench_json.sh
-│ ├── kubesecurity/
+│ ├── kubesecurity/ # Kubesec policy scan
 │ │ └── kubesec-scan.sh
-│ └── opa-policy/
+│ └── opa-policy/ # OPA/Rego policies
 │ ├── dockerfile_security.rego
 │ └── opa-k8s-security.rego
 │
@@ -243,20 +256,18 @@ flowchart LR
 │ │ ├── eks/ # Root module (backend.tf, main.tf, variables.tf, dev.tfvars)
 │ │ └── module/ # Reusable VPC/EKS/IAM modules
 │ └── jenkins-setup/ # Jenkins infra (ALB/EFS/roles)
-│ ├── main.tf
-│ ├── providers.tf
-│ ├── vars.tf
-│ └── jenkins-plugins/ # Jenkins bootstrap
-│ ├── installer.sh
-│ └── plugins.txt
+│ ├── main.tf providers.tf vars.tf …
+│ └── jenkins-plugins/ # Jenkins bootstrap (plugins.txt, installer.sh)
 │
 ├── Jenkinsfile # CI/CD pipeline (build → image → deploy → tests)
 ├── Dockerfile # Java service container
 ├── pom.xml # Maven build descriptor
+├── SECURITY.md # Security posture & scanning notes
 ├── generate_kube_bench_report.py # kube-bench JSON → readable report
+├── README.md # Project documentation
 └── vars/ # Jenkins shared library helpers
 ├── dockerAgent.groovy
-├── mavenAgent.groovy # (fix double-dot if present)
+├── mavenAgent.groovy # (fix double dot in filename)
 └── sendNotification.groovy
 
 ## Microservice Setup — Node.js dependency
